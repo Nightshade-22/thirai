@@ -1,12 +1,12 @@
 #!/bin/sh
-# Mac + Android over a USB cable. Run this alongside .build/release/oldphonedeck.
+# Mac + Android over a USB cable. Run this alongside .build/release/thirai.
 # adb's reverse tunnel makes http://localhost:8045 on the phone reach this Mac over the cable.
 # Needs: brew install android-platform-tools, and USB debugging on the phone.
 # Note: the Mac server itself still listens on Wi-Fi too; block it in the macOS firewall
 # (System Settings > Network > Firewall) if you want cable only.
 PORT="${1:-8045}"
-TOKEN="$(cat "$HOME/.oldphonedeck/token" 2>/dev/null)"
-[ -n "$TOKEN" ] || { echo "Start oldphonedeck once first so it creates ~/.oldphonedeck/token"; exit 1; }
+TOKEN="$(cat "$HOME/.thirai/token" 2>/dev/null)"
+[ -n "$TOKEN" ] || { echo "Start thirai once first so it creates ~/.thirai/token"; exit 1; }
 command -v adb >/dev/null || { echo "adb not found: brew install android-platform-tools"; exit 1; }
 
 echo "Waiting for an Android phone on USB (Ctrl-C to stop)..."

@@ -70,7 +70,7 @@ final class Music {
             }.resume()
         } else if app == "Music" {
             // Apple Music only hands out artwork as raw data; write it to a file and read it back.
-            let file = NSTemporaryDirectory() + "oldphonedeck-art"
+            let file = NSTemporaryDirectory() + "thirai-art"
             let script = """
             tell application "Music" to set d to raw data of artwork 1 of current track
             set f to open for access (POSIX file "\(file)") with write permission

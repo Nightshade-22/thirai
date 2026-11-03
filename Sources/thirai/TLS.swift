@@ -7,9 +7,9 @@ import Security
 /// The CA is created once; trust it on the iPhone and every later server cert is accepted.
 /// The server cert is re-issued automatically when the Mac's LAN address changes.
 enum LocalTLS {
-    static let dir = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".oldphonedeck/tls")
-    static var caDER: URL { dir.appendingPathComponent("oldphonedeck-ca.cer") }
-    private static let p12Password = "oldphonedeck"
+    static let dir = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".thirai/tls")
+    static var caDER: URL { dir.appendingPathComponent("thirai-ca.cer") }
+    private static let p12Password = "thirai"
 
     /// Returns a TLS identity for `ip`, creating the CA and/or server cert as needed.
     static func identity(for ip: String) -> sec_identity_t? {
@@ -41,7 +41,7 @@ enum LocalTLS {
         p.waitUntilExit()
         guard p.terminationStatus == 0 else {
             let msg = String(data: err.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-            throw NSError(domain: "oldphonedeck.tls", code: Int(p.terminationStatus),
+            throw NSError(domain: "thirai.tls", code: Int(p.terminationStatus),
                           userInfo: [NSLocalizedDescriptionKey: "openssl \(args.first ?? ""): \(msg)"])
         }
     }
@@ -51,10 +51,10 @@ enum LocalTLS {
         try "basicConstraints=critical,CA:TRUE\nkeyUsage=critical,keyCertSign,cRLSign\nsubjectKeyIdentifier=hash\n"
             .write(to: dir.appendingPathComponent("ca.ext"), atomically: true, encoding: .utf8)
         try openssl(["req", "-new", "-newkey", "rsa:2048", "-nodes", "-keyout", "ca.key", "-out", "ca.csr",
-                     "-subj", "/CN=OldPhoneDeck CA"])
+                     "-subj", "/CN=Thirai CA"])
         try openssl(["x509", "-req", "-in", "ca.csr", "-signkey", "ca.key", "-sha256", "-days", "3650",
                      "-extfile", "ca.ext", "-out", "ca.pem"])
-        try openssl(["x509", "-in", "ca.pem", "-outform", "der", "-out", "oldphonedeck-ca.cer"])
+        try openssl(["x509", "-in", "ca.pem", "-outform", "der", "-out", "thirai-ca.cer"])
         try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: dir.appendingPathComponent("ca.key").path)
     }
 
@@ -84,12 +84,12 @@ enum LocalTLS {
         let status = SecPKCS12Import(data as CFData, opts as CFDictionary, &items)
         guard status == errSecSuccess, let first = (items as? [[String: Any]])?.first,
               let ref = first[kSecImportItemIdentity as String] else {
-            throw NSError(domain: "oldphonedeck.tls", code: Int(status),
+            throw NSError(domain: "thirai.tls", code: Int(status),
                           userInfo: [NSLocalizedDescriptionKey: "Could not load server identity (\(status))"])
         }
         let identity = ref as! SecIdentity
         guard let sec = sec_identity_create(identity) else {
-            throw NSError(domain: "oldphonedeck.tls", code: -1, userInfo: [NSLocalizedDescriptionKey: "sec_identity_create failed"])
+            throw NSError(domain: "thirai.tls", code: -1, userInfo: [NSLocalizedDescriptionKey: "sec_identity_create failed"])
         }
         return sec
     }

@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "OldPhoneDeck",
+    name: "Thirai",
     platforms: [.macOS(.v14)],
     targets: [
         .executableTarget(
-            name: "oldphonedeck",
-            path: "Sources/oldphonedeck",
+            name: "thirai",
+            path: "Sources/thirai",
             resources: [.copy("web")],
             linkerSettings: [.linkedFramework("AppKit")]
         ),

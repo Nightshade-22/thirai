@@ -63,7 +63,7 @@ enum Apps {
 /// Which apps the phone launcher shows, in order. Stored on the Mac so Safari and the
 /// home-screen app (which have separate storage on iOS) see the same list.
 enum Launcher {
-    static let file = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".oldphonedeck/launcher.json")
+    static let file = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".thirai/launcher.json")
 
     /// nil = never configured (phone shows everything and suggests editing).
     static func selected() -> [String]? {

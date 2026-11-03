@@ -1,4 +1,4 @@
-# OldPhoneDeck helper: one long-running Windows PowerShell 5.1 process.
+# Thirai helper: one long-running Windows PowerShell 5.1 process.
 # Reads one command per line on stdin and writes exactly one line back on stdout.
 #   apps          -> JSON [{name, path}] from the Start menu (desktop and Store apps)
 #   icon <b64>    -> base64 PNG of an app's icon (arg: base64 UTF-8 AppID), or empty

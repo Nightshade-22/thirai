@@ -1,3 +1,3 @@
-module oldphonedeck-windows
+module thirai-windows
 
 go 1.22

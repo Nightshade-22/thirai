@@ -1,4 +1,4 @@
-// OldPhoneDeck for Windows: serves the same phone page and HTTP API as the Mac version,
+// Thirai for Windows: serves the same phone page and HTTP API as the Mac version,
 // so any old iPhone or Android phone with a browser becomes a touch control panel for a PC.
 package main
 
@@ -261,7 +261,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func writeManifest(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/manifest+json")
 	writeJSON(w, map[string]interface{}{
-		"name": "OldPhoneDeck", "short_name": "Deck",
+		"name": "Thirai", "short_name": "Deck",
 		"start_url": "/", "scope": "/", "display": "fullscreen",
 		"orientation": "landscape", "background_color": "#050507", "theme_color": "#050507",
 		"icons": []map[string]string{
@@ -273,12 +273,12 @@ func writeManifest(w http.ResponseWriter) {
 
 func main() {
 	flag.Usage = func() {
-		fmt.Println("oldphonedeck: turn an old phone into a touch control panel for your PC")
+		fmt.Println("thirai: turn an old phone into a touch control panel for your PC")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
 	home, _ := os.UserHomeDir()
-	configDir = filepath.Join(home, ".oldphonedeck")
+	configDir = filepath.Join(home, ".thirai")
 	token = loadToken()
 	loadConfig()
 
@@ -309,7 +309,7 @@ func main() {
 
 	if *usbMode {
 		fmt.Printf(`
-OldPhoneDeck is running on %s in USB mode. It is not reachable over Wi-Fi.
+Thirai is running on %s in USB mode. It is not reachable over Wi-Fi.
 
   1. On the Android phone, turn on Developer options, then USB debugging.
   2. Plug the phone into this PC with a USB cable and tap Allow on the phone.
@@ -328,7 +328,7 @@ Close this window (or press Ctrl+C) to stop.
 			ip = *bindAddr
 		}
 		fmt.Printf(`
-OldPhoneDeck is running on %s. On the phone (same Wi-Fi), open:
+Thirai is running on %s. On the phone (same Wi-Fi), open:
 
     http://%s:%d/#k=%s
 
