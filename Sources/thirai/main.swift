@@ -15,7 +15,7 @@ struct Options {
             case "--mic-device": micDevice = it.next() ?? micDevice
             case "-h", "--help":
                 print("""
-                oldphonedeck: turn an old iPhone into a touch control panel for your Mac
+                thirai: turn an old iPhone into a touch control panel for your Mac
                   --port N          HTTP port (default 8045; HTTPS uses N+2, WebSocket N+3)
                   --mic-device NAME audio device that receives the phone's mic (default BlackHole)
                 """)
@@ -28,7 +28,7 @@ struct Options {
 
 setvbuf(stdout, nil, _IOLBF, 0)
 let opts = Options(CommandLine.arguments)
-let configDir = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".oldphonedeck")
+let configDir = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".thirai")
 
 // MARK: Access token (anyone on the Wi-Fi could otherwise open apps on your Mac)
 
@@ -89,18 +89,18 @@ let webRoot = Bundle.module.url(forResource: "web", withExtension: nil)!
 
 let routes: (HTTPRequest, HTTPConnection) -> Void = { req, conn in
     // Public: the page shell (so a home-screen bookmark loads) and the local CA as an iOS profile.
-    if req.path == "/oldphonedeck.mobileconfig" {
+    if req.path == "/thirai.mobileconfig" {
         guard let der = try? Data(contentsOf: LocalTLS.caDER) else { return conn.respond(404, text: "no certificate yet") }
         let cert: [String: Any] = [
             "PayloadType": "com.apple.security.root", "PayloadVersion": 1,
-            "PayloadIdentifier": "com.oldphonedeck.ca.cert", "PayloadUUID": "6F1C2A4E-2B7D-4C5A-9E1F-50A1C0DEC0A1",
-            "PayloadDisplayName": "OldPhoneDeck CA", "PayloadCertificateFileName": "oldphonedeck-ca.cer", "PayloadContent": der,
+            "PayloadIdentifier": "com.thirai.ca.cert", "PayloadUUID": "6F1C2A4E-2B7D-4C5A-9E1F-50A1C0DEC0A1",
+            "PayloadDisplayName": "Thirai CA", "PayloadCertificateFileName": "thirai-ca.cer", "PayloadContent": der,
         ]
         let profile: [String: Any] = [
             "PayloadType": "Configuration", "PayloadVersion": 1,
-            "PayloadIdentifier": "com.oldphonedeck.ca", "PayloadUUID": "3B8E9D10-7C2F-4E61-A5B3-50A1C0DEC0A2",
-            "PayloadDisplayName": "OldPhoneDeck", "PayloadOrganization": "OldPhoneDeck",
-            "PayloadDescription": "Lets this iPhone open OldPhoneDeck on your Mac over HTTPS (needed for camera, mic and voice).",
+            "PayloadIdentifier": "com.thirai.ca", "PayloadUUID": "3B8E9D10-7C2F-4E61-A5B3-50A1C0DEC0A2",
+            "PayloadDisplayName": "Thirai", "PayloadOrganization": "Thirai",
+            "PayloadDescription": "Lets this iPhone open Thirai on your Mac over HTTPS (needed for camera, mic and voice).",
             "PayloadContent": [cert],
         ]
         let data = (try? PropertyListSerialization.data(fromPropertyList: profile, format: .xml, options: 0)) ?? Data()
@@ -197,14 +197,14 @@ if !AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedVal
 
 print("""
 
-OldPhoneDeck is running. On the phone (same Wi-Fi), open Safari and go to:
+Thirai is running. On the phone (same Wi-Fi), open Safari and go to:
 
     http://\(lanIP):\(opts.port)/#k=\(token)
 
 iPhone: tap Share → Add to Home Screen. Android: Chrome menu → Add to Home screen.
 Hold any key to choose your apps.
 
-Modern iPhone (voice, camera, mic): once, open http://\(lanIP):\(opts.port)/oldphonedeck.mobileconfig,
+Modern iPhone (voice, camera, mic): once, open http://\(lanIP):\(opts.port)/thirai.mobileconfig,
 install it, enable it in Settings → General → About → Certificate Trust Settings,
 then use https://\(lanIP):\(opts.port + 2)/#k=\(token)
 Camera for OBS (Media Source): http://localhost:\(opts.port)/camera.mjpg?k=\(token)

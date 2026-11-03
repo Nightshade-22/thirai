@@ -2,19 +2,19 @@
 <html>
 <head>
 <meta charset="utf-8">
-<!-- OldPhoneDeck: a touch control panel for a phone or tablet in landscape.
+<!-- Thirai: a touch control panel for a phone or tablet in landscape.
      Must run in iOS 8/9 Safari (iPhone 4S): ES5 syntax only, no fetch, no flex gap, no Intl.
      Modern iPhones additionally get a Phone tab (camera + mic to the Mac) and voice input for Ask Claude. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="OldPhoneDeck">
+<meta name="apple-mobile-web-app-title" content="Thirai">
 <meta name="theme-color" content="#050507">
 <!-- Android Chrome: lets "Add to Home screen" install the deck as a full-screen app. -->
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/app-icon-192.png">
-<title>OldPhoneDeck</title>
+<title>Thirai</title>
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden; color: #f5f5f7;
     background: radial-gradient(ellipse at 0% 0%, rgba(94,92,230,.20), rgba(0,0,0,0) 55%),
@@ -257,8 +257,8 @@
     </div>
     <div id="pSetup">
       <h2>One-time setup for camera &amp; mic</h2>
-      <p>1. <a href="/oldphonedeck.mobileconfig">Download the OldPhoneDeck profile</a>, tap <b>Allow</b>, then Settings → <b>Profile Downloaded</b> → Install.</p>
-      <p>2. Settings → General → About → <b>Certificate Trust Settings</b> → turn on OldPhoneDeck CA.</p>
+      <p>1. <a href="/thirai.mobileconfig">Download the Thirai profile</a>, tap <b>Allow</b>, then Settings → <b>Profile Downloaded</b> → Install.</p>
+      <p>2. Settings → General → About → <b>Certificate Trust Settings</b> → turn on Thirai CA.</p>
       <p>3. Open the <a id="httpsLink" href="#">secure deck</a>, then Share → Add to Home Screen.</p>
     </div>
   </div>
@@ -1092,7 +1092,7 @@
     var grid = $('sndGrid');
     grid.innerHTML = '';
     $('sndMsg').textContent = list.length ? '' :
-      'No sounds yet. On the ' + HOST + ', put .mp3 or .wav files in the "sounds" folder inside ".oldphonedeck" in your user folder.';
+      'No sounds yet. On the ' + HOST + ', put .mp3 or .wav files in the "sounds" folder inside ".thirai" in your user folder.';
     if (list.length) {
       var stop = makeButton(function () { act('kind=stopsound', true); });
       paintButton(stop, { cls: 'c-red', icon: 'stop', label: 'Stop', sub: '' });
