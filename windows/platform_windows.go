@@ -476,3 +476,8 @@ func netCounters() (uint64, uint64, bool) {
 	}
 	return bestRx, bestTx, true
 }
+
+// hideConsole stops helper programs (adb) from flashing a console window.
+func hideConsole(c *exec.Cmd) {
+	c.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000} // CREATE_NO_WINDOW
+}

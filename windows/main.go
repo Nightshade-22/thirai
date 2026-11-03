@@ -25,6 +25,8 @@ var webFS embed.FS
 var (
 	port       = flag.Int("port", 8045, "HTTP port")
 	noAutoSend = flag.Bool("no-autosend", false, "Take note opens Claude with the text but does not press Enter")
+	usbMode    = flag.Bool("usb", false, "Android over a USB cable (adb): listen on this PC only, never on Wi-Fi")
+	bindAddr   = flag.String("bind", "", "listen on this one IP address only (for example a USB tether adapter)")
 	configDir  string
 	token      string
 )
@@ -278,8 +280,16 @@ func main() {
 	platformInit()
 	startStats()
 
+	// USB mode listens on this PC only; the phone reaches it through adb's reverse tunnel.
+	addr := fmt.Sprintf(":%d", *port)
+	switch {
+	case *usbMode:
+		addr = fmt.Sprintf("127.0.0.1:%d", *port)
+	case *bindAddr != "":
+		addr = net.JoinHostPort(*bindAddr, fmt.Sprint(*port))
+	}
 	srv := &http.Server{
-		Addr:              fmt.Sprintf(":%d", *port),
+		Addr:              addr,
 		Handler:           http.HandlerFunc(handler),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
@@ -287,12 +297,31 @@ func main() {
 	}
 	ln, err := net.Listen("tcp", srv.Addr)
 	if err != nil {
-		fmt.Printf("Cannot listen on port %d: %v\n", *port, err)
+		fmt.Printf("Cannot listen on %s: %v\n", srv.Addr, err)
 		waitAndExit(1)
 	}
 
-	ip := lanAddress()
-	fmt.Printf(`
+	if *usbMode {
+		fmt.Printf(`
+OldPhoneDeck is running on %s in USB mode. It is not reachable over Wi-Fi.
+
+  1. On the Android phone, turn on Developer options, then USB debugging.
+  2. Plug the phone into this PC with a USB cable and tap Allow on the phone.
+  3. The deck opens on the phone by itself. If it doesn't, open Chrome there and go to:
+
+        http://localhost:%d/#k=%s
+
+The phone also stays awake while it's plugged in.
+Close this window (or press Ctrl+C) to stop.
+
+`, hostName(), *port, token)
+		go usbLoop(*port, token)
+	} else {
+		ip := lanAddress()
+		if *bindAddr != "" {
+			ip = *bindAddr
+		}
+		fmt.Printf(`
 OldPhoneDeck is running on %s. On the phone (same Wi-Fi), open:
 
     http://%s:%d/#k=%s
@@ -303,9 +332,11 @@ OldPhoneDeck is running on %s. On the phone (same Wi-Fi), open:
 
 If Windows Firewall asks, allow access on Private networks only.
 The link is the password: anyone on your Wi-Fi who has it can open apps on this PC.
+For a cable instead of Wi-Fi (Android), start with --usb.
 Close this window (or press Ctrl+C) to stop.
 
 `, hostName(), ip, *port, token)
+	}
 
 	if err := srv.Serve(ln); err != nil {
 		fmt.Println("Server stopped:", err)
