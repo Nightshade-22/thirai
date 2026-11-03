@@ -110,6 +110,13 @@ let routes: (HTTPRequest, HTTPConnection) -> Void = { req, conn in
         let html = (try? Data(contentsOf: webRoot.appendingPathComponent("index.html"))) ?? Data()
         return conn.respond(200, "text/html; charset=utf-8", html)
     }
+    // Public: Android Chrome's install manifest and the home-screen icons.
+    let publicFiles = ["/manifest.webmanifest": "application/manifest+json",
+                       "/app-icon-192.png": "image/png", "/app-icon-512.png": "image/png"]
+    if let type = publicFiles[req.path] {
+        let data = (try? Data(contentsOf: webRoot.appendingPathComponent(String(req.path.dropFirst())))) ?? Data()
+        return conn.respond(200, type, data)
+    }
     guard req.query["k"] == token else { return conn.respond(403, text: "bad token") }
     let p = req.params
 
@@ -194,7 +201,8 @@ OldPhoneDeck is running. On the phone (same Wi-Fi), open Safari and go to:
 
     http://\(lanIP):\(opts.port)/#k=\(token)
 
-Then tap Share → Add to Home Screen. Hold any key to choose your apps.
+iPhone: tap Share → Add to Home Screen. Android: Chrome menu → Add to Home screen.
+Hold any key to choose your apps.
 
 Modern iPhone (voice, camera, mic): once, open http://\(lanIP):\(opts.port)/oldphonedeck.mobileconfig,
 install it, enable it in Settings → General → About → Certificate Trust Settings,
