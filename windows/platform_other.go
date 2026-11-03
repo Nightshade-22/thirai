@@ -6,7 +6,6 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"os"
 	"os/exec"
 	"time"
 )
@@ -26,7 +25,7 @@ var demoPlaying = true
 var demoStart = time.Now()
 
 func platformInit()                 { fmt.Println("(demo platform: not Windows)") }
-func hostName() string              { n, _ := os.Hostname(); return n }
+func hostName() string              { return "STUDIO-PC" }
 func listApps() []App               { return demoApps }
 func appIcon(string) []byte         { return nil }
 func launchApp(id string)           { fmt.Println("launch", id) }
