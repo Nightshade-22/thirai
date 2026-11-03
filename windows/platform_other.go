@@ -67,3 +67,19 @@ func netCounters() (uint64, uint64, bool) {
 }
 
 func hideConsole(*exec.Cmd) {}
+
+func sendHotkey(keys string) error {
+	if _, _, err := parseHotkey(keys); err != nil {
+		return err
+	}
+	fmt.Println("hotkey", keys)
+	return nil
+}
+func volumeKey(a string) bool {
+	fmt.Println("volume", a)
+	return a == "up" || a == "down" || a == "mute"
+}
+func typeText(s string)     { fmt.Printf("type %q\n", s) }
+func shellOpenURL(u string) { fmt.Println("open", u) }
+func playSound(path string) { fmt.Println("play", path) }
+func stopSound()            { fmt.Println("stop sound") }

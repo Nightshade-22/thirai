@@ -15,7 +15,7 @@ struct Options {
             case "--mic-device": micDevice = it.next() ?? micDevice
             case "-h", "--help":
                 print("""
-                oldphonedeck: turn an old iPhone into a Stream Deck-style control panel for your Mac
+                oldphonedeck: turn an old iPhone into a touch control panel for your Mac
                   --port N          HTTP port (default 8045; HTTPS uses N+2, WebSocket N+3)
                   --mic-device NAME audio device that receives the phone's mic (default BlackHole)
                 """)

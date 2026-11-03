@@ -149,10 +149,12 @@ func runSpeedTest() {
 
 	// Ping: best of 5 small requests on a warm connection.
 	var best time.Duration
-	for i := 0; i < 6; i++ {
+	fails := 0
+	for i := 0; i < 6 && fails < 2; i++ {
 		t0 := time.Now()
 		resp, err := client.Get(speedHost + "/__down?bytes=0")
 		if err != nil {
+			fails++
 			continue
 		}
 		_, _ = io.Copy(io.Discard, resp.Body)
@@ -161,30 +163,38 @@ func runSpeedTest() {
 			best = d
 		}
 	}
-	if best > 0 {
-		result["ping"] = float64(best.Microseconds()) / 1000
+	if best == 0 { // no internet (or the test site is blocked): keep the last result
+		statsMu.Lock()
+		testing = false
+		statsMu.Unlock()
+		return
 	}
+	result["ping"] = float64(best.Microseconds()) / 1000
 
 	// Download and upload: 4 parallel streams for a fixed time.
-	if mbps := streamTest(func(ctx context.Context, n *int64) {
+	if mbps := streamTest(func(ctx context.Context, n *int64) error {
 		req, _ := http.NewRequestWithContext(ctx, "GET", speedHost+"/__down?bytes=25000000", nil)
-		if resp, err := http.DefaultClient.Do(req); err == nil {
-			_, _ = io.Copy(io.Discard, countingReader{resp.Body, n})
-			resp.Body.Close()
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return err
 		}
+		_, _ = io.Copy(io.Discard, countingReader{resp.Body, n})
+		return resp.Body.Close()
 	}, 8*time.Second); mbps > 0 {
 		result["down"] = mbps
 	}
 	chunk := make([]byte, 4<<20)
 	_, _ = rand.Read(chunk)
-	if mbps := streamTest(func(ctx context.Context, n *int64) {
+	if mbps := streamTest(func(ctx context.Context, n *int64) error {
 		body := countingReader{&sliceReader{b: chunk}, n}
 		req, _ := http.NewRequestWithContext(ctx, "POST", speedHost+"/__up", body)
 		req.ContentLength = int64(len(chunk))
-		if resp, err := http.DefaultClient.Do(req); err == nil {
-			_, _ = io.Copy(io.Discard, resp.Body)
-			resp.Body.Close()
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return err
 		}
+		_, _ = io.Copy(io.Discard, resp.Body)
+		return resp.Body.Close()
 	}, 6*time.Second); mbps > 0 {
 		result["up"] = mbps
 	}
@@ -213,7 +223,7 @@ func (s *sliceReader) Read(p []byte) (int, error) {
 }
 
 // streamTest runs `one` repeatedly on 4 goroutines until `dur` passes and returns Mbps.
-func streamTest(one func(ctx context.Context, n *int64), dur time.Duration) float64 {
+func streamTest(one func(ctx context.Context, n *int64) error, dur time.Duration) float64 {
 	ctx, cancel := context.WithTimeout(context.Background(), dur)
 	defer cancel()
 	var n int64
@@ -224,7 +234,9 @@ func streamTest(one func(ctx context.Context, n *int64), dur time.Duration) floa
 		go func() {
 			defer wg.Done()
 			for ctx.Err() == nil {
-				one(ctx, &n)
+				if one(ctx, &n) != nil && ctx.Err() == nil {
+					return // offline or blocked: stop this stream instead of retrying in a tight loop
+				}
 			}
 		}()
 	}
