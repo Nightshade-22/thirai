@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"os/exec"
 	"time"
 )
 
@@ -64,3 +65,5 @@ func netCounters() (uint64, uint64, bool) {
 	demoTx += uint64(rand.Intn(600_000))
 	return demoRx, demoTx, true
 }
+
+func hideConsole(*exec.Cmd) {}

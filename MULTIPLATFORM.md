@@ -34,7 +34,7 @@ Windows Defender SmartScreen may warn about an unsigned app the first time. Clic
 | Batteries | IOKit, ioreg, system_profiler | Laptop battery, plus Bluetooth devices that report a level to Windows |
 | Take note | `claude://` link, then Return | Same link, then Enter, only if Claude is the window in front |
 
-Options: `--port 8045` and `--no-autosend` (Take note fills in the chat but leaves it unsent).
+Options: `--port 8045`, `--usb` (wired mode, below), `--bind <ip>` (listen on one address only) and `--no-autosend` (Take note fills in the chat but leaves it unsent).
 
 ### Build it yourself
 
@@ -45,6 +45,29 @@ GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o dist/oldphonede
 ```
 
 On a Windows machine, plain `go build` works. On macOS or Linux, `go run .` starts a demo server with sample data, which is handy for working on the page. The page is embedded at build time from `windows/web/`, which is a copy of `Sources/oldphonedeck/web/`; copy it again after editing.
+
+## Wired mode (USB cable, Android)
+
+Wi-Fi mode sends the access link in plain HTTP, so anyone sniffing the network can copy it. USB mode avoids that: the phone talks to the computer through the cable and the server doesn't listen on Wi-Fi at all.
+
+On Windows:
+
+1. Install Android platform-tools once: `winget install Google.PlatformTools`. You can also download the platform-tools zip from Google and put the `platform-tools` folder next to the .exe.
+2. On the phone, turn on Developer options (tap Build number seven times in About phone), then USB debugging.
+3. Double-click `start-usb.bat` (or run the .exe with `--usb`).
+4. Plug the phone in and tap Allow on the "Allow USB debugging?" prompt.
+
+The deck then opens on the phone by itself and reconnects whenever you plug it back in. While USB mode runs, it also sets the phone to stay awake while plugged into USB. To undo that, run `adb shell svc power stayon false`.
+
+On a Mac, run `./usb-android.sh` next to the normal server (needs `brew install android-platform-tools`). The Swift server still listens on Wi-Fi as well, so block it in the macOS firewall if you want cable only.
+
+USB mode also makes Chrome treat the page as secure (it's on `localhost`), which turns on voice input for Take note. It needs Android 5.0 or newer.
+
+### iPhone over a cable
+
+There isn't a clean equivalent for iPhone. Apple's USB link lets a computer reach the phone, not the other way round, which is the direction the deck needs. The one workaround is Personal Hotspot over USB, which needs a SIM with hotspot enabled. That rules out most drawer iPhones. It can also route the computer's internet through the phone. If you do use it, start the server with `--bind` and the computer's address on that link (usually `172.20.10.2`), so it only listens there.
+
+For an iPhone on Wi-Fi, the safer fix is HTTPS. The Mac server already has it. The Windows server doesn't yet.
 
 ## Android changes to the phone page
 
@@ -71,7 +94,7 @@ The design is sound for a home network. Every request except the page shell need
 
 Points worth knowing, and what the Windows server does about them:
 
-1. Traffic is plain HTTP, so the token travels in the clear on your Wi-Fi. Anyone who can sniff that network can lift it. Fine at home, not on office or café Wi-Fi.
+1. Traffic is plain HTTP, so the token travels in the clear on your Wi-Fi. Anyone who can sniff that network can lift it. Fine at home, not on office or café Wi-Fi. Wired mode (above) removes this for Android.
 2. Take note sends text to the Claude desktop app and presses Return. Anyone with the token can therefore start Claude chats on your computer. If your Claude app has connectors or local tools enabled, treat the token as access to those too. The Windows server caps notes at 4,000 characters and has `--no-autosend`.
 3. On Mac, the Accessibility permission goes to Terminal (or whatever runs the server), so every script you run from Terminal gets it as well. Windows needs no such permission.
 4. The Mac server reads request bodies up to 512 MB before checking the token, so anyone on the network can make it buffer a lot of memory. The Windows server checks the token first and caps bodies at 64 KB.
@@ -82,4 +105,4 @@ To issue a new token on either system, delete `.oldphonedeck/token` in your home
 
 ## Not tested on real hardware
 
-The Windows server compiles and its HTTP side was tested against the phone page in emulated Android and iPhone browsers. The Windows-only parts (Start menu apps, icons, media controls, Bluetooth batteries, the Claude deep link) follow documented APIs but haven't run on a real Windows PC yet. If one fails, the deck shows that widget empty and the rest keeps working.
+The Windows server compiles and its HTTP side was tested against the phone page in emulated Android and iPhone browsers. The Windows-only parts (Start menu apps, icons, media controls, Bluetooth batteries, the Claude deep link) follow documented APIs but haven't run on a real Windows PC yet. If one fails, the deck shows that widget empty and the rest keeps working. USB mode was tested with a stand-in for adb, not a real phone.
