@@ -1,122 +1,60 @@
-# OldPhoneDeck
+# Thirai
 
-> This fork adds a Windows server and Android support. See [MULTIPLATFORM.md](MULTIPLATFORM.md).
+Thirai (திரை, Tamil for "screen") turns an old phone or tablet into a touch control panel for your PC or Mac. It has app keys, now playing, internet and battery widgets, and streaming controls for OBS, Discord and music, plus a soundboard.
 
-**Turn an old iPhone into a touch control panel for your Mac.**
-No jailbreak, no App Store, nothing to install on the phone: it runs in Safari, even on an iPhone 4S stuck on iOS 9.
+Nothing is installed on the phone. The panel is a web page, so it runs in Safari or Chrome on anything from an iPhone 4S or iPad 2 to the latest Android tablet.
 
-![An iPhone 4S on a desk stand running OldPhoneDeck](docs/desk.jpg)
+| Deck | Stream |
+| --- | --- |
+| ![Deck on a phone](docs/deck-phone.png) | ![Stream page on a phone](docs/stream-phone.png) |
 
-| The deck | Take note | Pick your apps |
-|---|---|---|
-| ![Deck](docs/deck.jpg) | ![Take note](docs/take-note.jpg) | ![Pick apps](docs/pick-apps.jpg) |
+On a tablet you get more keys and bigger buttons:
 
-## Features
+![Stream page on a tablet](docs/stream-tablet.png)
 
-- **8 big keys:** 7 Mac apps of your choice, plus **Take note**. Tap a key and the app opens on your Mac. Hold any key to pick apps.
-- **Take note → new Claude chat:** dictate a note, and it opens and sends a fresh conversation in the [Claude](https://claude.ai/download) desktop app.
-- **Now playing:** artwork, track, progress, and previous / play-pause / next for **Spotify** or **Apple Music**.
-- **Internet widget:** download, upload and ping (macOS's built-in `networkQuality`), plus a live traffic graph. Tap it to re-test.
-- **Batteries widget:** MacBook, Magic Keyboard / Mouse / Trackpad and AirPods (with case), each as an icon + percentage.
-- **Fits any iPhone:** a compact 480×320 layout on old phones; full-width landscape and a portrait layout on modern ones.
-- **Modern iPhones also get:** voice input for Take note, and a **Phone** tab that streams the camera (into OBS) and the mic (into BlackHole) to your Mac.
+## What it does
 
-## Requirements
+The Deck page has 7 app keys on a phone and 14 or 17 on a tablet, plus Take note, which turns a note into a new chat in the Claude desktop app. It also shows what's playing with track controls, your internet speed, and laptop and Bluetooth battery levels.
 
-- A Mac with macOS 14 or later and the Xcode Command Line Tools (`xcode-select --install`)
-- An iPhone or iPad with Safari: anything from iOS 8/9 (iPhone 4S, 5, iPad 2…) to the latest
-- Both on the same Wi-Fi network
+The Stream page (Windows) has a button for each OBS scene and buttons to go live, record, pause, save a replay clip, switch the virtual camera, transition in studio mode, and mute the mic or desktop audio. Discord mute and deafen, media and volume keys, canned chat messages and links sit alongside. Going live needs a press and hold. The top line shows live and recording timers, frame rate, CPU and dropped frames, and every button is set in one config file.
 
-## Quick start
+The Sounds page (Windows) turns any `.mp3` or `.wav` in the sounds folder into a button. Sounds play through your speakers, so OBS picks them up.
+
+An Android phone can also run over a USB cable, with the PC closed to Wi-Fi entirely.
+
+## Quick start on Windows
+
+1. Download `windows/dist/thirai-windows-x64.exe` (`arm64` for Snapdragon laptops) and double-click it.
+2. Allow it on Private networks when Windows Firewall asks.
+3. Open the link it prints on your phone, then add it to the home screen.
+4. Hold any key to pick your apps.
+
+To use a USB cable with an Android phone instead, run `start-usb.bat`. To connect OBS and Discord, follow the [guide](docs/GUIDE.md#connect-obs-once).
+
+## Quick start on a Mac
 
 ```bash
-git clone https://github.com/<you>/OldPhoneDeck.git
-cd OldPhoneDeck
+git clone https://github.com/<you>/thirai.git
+cd thirai
 swift build -c release
-.build/release/oldphonedeck
+.build/release/thirai
 ```
 
-It prints a link like `http://192.168.x.x:8045/#k=<token>`. On the phone:
+Then open the printed link on the phone. The full Mac setup, including the camera and mic tab for modern iPhones, is in [docs/MAC.md](docs/MAC.md).
 
-1. Open that link in **Safari**.
-2. Tap **Share → Add to Home Screen** and launch it from there to run it full screen.
-3. **Hold any key** to choose your 7 apps.
+## Docs
 
-Tips for a dedicated desk display: set **Auto-Lock → Never**, and use **Guided Access** (Settings → Accessibility) to lock the phone to the deck.
+- [Guide](docs/GUIDE.md): Windows setup, Stream and Sounds pages, button config, wired mode, Android and tablets, security notes
+- [Mac](docs/MAC.md): Mac server setup, permissions, HTTPS for modern iPhones, troubleshooting
 
-### macOS permissions (asked on first use)
+## Security in one paragraph
 
-| Permission | Why |
-|---|---|
-| **Accessibility** | Take note presses Return in Claude to send your note |
-| **Automation → Spotify / Music** | Reading what's playing and controlling playback |
+Every request needs a random access token, and the phone can only press buttons you've configured. On Wi-Fi the link travels as plain HTTP, so treat it like a password and use it on your home network only. Wired mode avoids the network altogether. Never port-forward Thirai to the internet. Details are in the [guide](docs/GUIDE.md#security-notes).
 
-They're granted to the app you run `oldphonedeck` from (e.g. Terminal).
+## Credits
 
-### Modern iPhone: voice, camera and mic (optional)
+Thirai is built by Merrilin A J on [OldPhoneDeck](https://github.com/GLAUCOMA82/OldPhoneDeck) by GLAUCOMA82 (MIT licence). The phone page and the Mac server come from that project. The Windows server, Android and tablet support, wired mode, Stream and Sounds pages and the security changes are new in Thirai. Both were built with [Claude Code](https://claude.com/claude-code).
 
-Safari only allows the microphone, camera and speech recognition on **HTTPS** pages, so OldPhoneDeck creates a private certificate authority on your Mac (stored in `~/.oldphonedeck/tls`).
-
-1. On the iPhone, open `http://<mac-ip>:8045/oldphonedeck.mobileconfig` and tap **Allow**.
-2. **Settings → Profile Downloaded → Install.**
-3. **Settings → General → About → Certificate Trust Settings** → turn on **OldPhoneDeck CA**. *(Easy to miss: without it Safari keeps saying "This Connection Is Not Private".)*
-4. Open `https://<mac-ip>:8047/#k=<token>` and add it to the Home Screen.
-
-**Camera → video calls:** in [OBS](https://obsproject.com), add a *Media Source* with `http://localhost:8045/camera.mjpg?k=<token>`, then click **Start Virtual Camera**.
-**Mic → video calls:** install [BlackHole 2ch](https://existential.audio/blackhole/) and restart OldPhoneDeck; pick "BlackHole 2ch" as the microphone in your call app.
-*(For plain FaceTime or Zoom calls, macOS's built-in Continuity Camera is simpler.)*
-
-## How it works
-
-```
-iPhone (Safari)                     Mac: oldphonedeck (Swift, no dependencies)
-┌──────────────────────┐  Wi-Fi    ┌───────────────────────────────────────────────────┐
-│ deck page            │ ────────▶ │ :8045 HTTP   page, apps, stats, music, Take note  │
-│ (ES5 JavaScript so   │           │ :8047 HTTPS  same, for modern iPhones             │
-│  iOS 8/9 can run it) │ ────────▶ │ :8048 WSS    camera frames + mic audio            │
-└──────────────────────┘           └───────────────────────────────────────────────────┘
-```
-
-| Feature | Mac side |
-|---|---|
-| App keys | `NSWorkspace` lists `/Applications`, renders icons, opens apps |
-| Take note | Opens `claude://claude.ai/new?q=…` (the same link the Claude app's own macOS Service uses), then presses Return |
-| Now playing | AppleScript to Spotify / Music, with a timeout so a pending permission prompt can't freeze it |
-| Internet | `/usr/bin/networkQuality -c` + `en*` interface byte counters |
-| Batteries | IOKit power sources, `ioreg -r -k BatteryPercent`, `system_profiler SPBluetoothDataType` |
-| HTTPS | Local CA and server certificate generated with the built-in `openssl`, served as an iOS profile |
-
-The whole phone UI is one file, [`Sources/oldphonedeck/web/index.html`](Sources/oldphonedeck/web/index.html). It's deliberately written in ES5 (no arrow functions, `let`, `fetch`…) so iOS 8/9 Safari can run it.
-
-## Options
-
-```
-oldphonedeck --port 8045           # HTTP port (HTTPS = port+2, WebSocket = port+3)
-oldphonedeck --mic-device NAME     # audio output that receives the phone's mic (default: BlackHole)
-```
-
-Settings live in `~/.oldphonedeck/`: `token` (the access code), `launcher.json` (your keys) and `tls/` (certificates).
-
-## Security
-
-- It listens on your **local network only**, and every request needs the random token from `~/.oldphonedeck/token`.
-- Anyone with the link on your Wi-Fi can open apps on your Mac, so **treat the URL like a password** and **never port-forward it to the internet**.
-- Delete `~/.oldphonedeck/token` to issue a new one.
-
-## Troubleshooting
-
-| Problem | Fix |
-|---|---|
-| Phone shows a blank page | Is the Mac on the same Wi-Fi? Check the printed IP. Old iOS can't run modern JavaScript, so if you edited `index.html`, keep it ES5. |
-| "This Connection Is Not Private" | Finish step 3 of the HTTPS setup (Certificate Trust Settings). |
-| Now playing stays empty | Approve macOS's "allow to control Spotify / Music" prompt, then wait a few seconds. |
-| Take note opens Claude but doesn't send | Grant Accessibility to the app running `oldphonedeck`. |
-| Mic says "No audio device matching BlackHole" | Install BlackHole 2ch, or ignore it if you don't use the mic. |
-
-## Built with Claude Code
-
-This project was built in an evening with [Claude Code](https://claude.com/claude-code). Want your own variant? Point Claude Code at this repo and ask for changes like *"add a weather widget"*, *"make the keys run Shortcuts"* or *"add a Pomodoro timer"*. Ask it to keep `index.html` ES5 if you want old iPhones to keep working.
-
-## License
+## Licence
 
 [MIT](LICENSE)
