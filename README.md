@@ -2,7 +2,7 @@
 
 > This fork adds a Windows server and Android support. See [MULTIPLATFORM.md](MULTIPLATFORM.md).
 
-**Turn an old iPhone into a Stream Deck–style control panel for your Mac.**
+**Turn an old iPhone into a touch control panel for your Mac.**
 No jailbreak, no App Store, nothing to install on the phone: it runs in Safari, even on an iPhone 4S stuck on iOS 9.
 
 ![An iPhone 4S on a desk stand running OldPhoneDeck](docs/desk.jpg)

@@ -1,12 +1,15 @@
 # OldPhoneDeck on iPhone, Android, Mac and Windows
 
-This fork of [GLAUCOMA82/OldPhoneDeck](https://github.com/GLAUCOMA82/OldPhoneDeck) adds a Windows server and makes the phone page work properly on Android. The phone side was always a web page, so the same page now runs on any iPhone or Android phone, against either a Mac or a Windows PC.
+This fork of [GLAUCOMA82/OldPhoneDeck](https://github.com/GLAUCOMA82/OldPhoneDeck) adds a Windows server with streaming controls, and makes the page work properly on Android phones and on tablets. The phone side was always a web page, so the same page runs on any iPhone, iPad, Android phone or Android tablet, against either a Mac or a Windows PC.
 
-| Phone | Mac server (original, Swift) | Windows server (new, Go) |
+| Device | Mac server (original, Swift) | Windows server (new, Go) |
 | --- | --- | --- |
-| iPhone 4S and newer (Safari) | Yes | Yes |
-| Android 5 and newer (Chrome) | Yes | Yes |
+| iPhone 4S and newer, iPad 2 and newer (Safari) | Yes | Yes |
+| Android 5 and newer, phone or tablet (Chrome) | Yes | Yes |
+| Stream page (OBS, Discord, music, links) and Sounds page | No | Yes |
 | Camera and mic tab | Modern iPhones only, needs the HTTPS setup | Not available |
+
+Tablets get their own layout: three rows of five or six app keys (14 or 17 apps plus Take note) and bigger Stream and Sounds grids. A tablet is anything whose shorter screen side is at least 600 points, which covers every iPad and most 7-inch and larger Android tablets.
 
 ## Windows quick start
 
@@ -15,7 +18,7 @@ This fork of [GLAUCOMA82/OldPhoneDeck](https://github.com/GLAUCOMA82/OldPhoneDec
 3. When Windows Firewall asks, tick Private networks only and click Allow.
 4. On the phone, open the link (Safari on iPhone, Chrome on Android).
 5. Add it to the home screen. On iPhone use Share, then Add to Home Screen. On Android use the Chrome menu, then Add to Home screen or Install app.
-6. Hold any key to pick your 7 apps.
+6. Hold any key to pick your apps (7 on a phone, 14 or 17 on a tablet).
 
 The window has to stay open while you use the deck. To start it with Windows, press Win+R, type `shell:startup`, and put a shortcut to the .exe in that folder.
 
@@ -35,6 +38,67 @@ Windows Defender SmartScreen may warn about an unsigned app the first time. Clic
 | Take note | `claude://` link, then Return | Same link, then Enter, only if Claude is the window in front |
 
 Options: `--port 8045`, `--usb` (wired mode, below), `--bind <ip>` (listen on one address only) and `--no-autosend` (Take note fills in the chat but leaves it unsent).
+
+## Stream page (Windows)
+
+The Stream and Sounds tabs appear at the top of the deck when it's connected to the Windows server.
+
+The Stream page has three parts. The top line shows LIVE or OFFLINE with the stream time, a REC timer, frame rate, CPU and dropped frames. Under it is one button per OBS scene, with the current scene in blue. Below that is a grid of action buttons. The defaults are:
+
+| Button | What it does |
+| --- | --- |
+| Go live | Starts or ends the stream. Press and hold, so a stray tap can't do it |
+| Record, Pause rec | Start or stop recording, pause or resume it |
+| Save clip | First tap arms OBS's replay buffer, later taps save the last moments as a clip |
+| Mic, Desktop | Mute or unmute OBS's mic and desktop audio; turns red when muted |
+| Discord: Mute, Deafen | Sends `Ctrl+Shift+Alt+M` and `Ctrl+Shift+Alt+D` (set these as Discord keybinds, below) |
+| Play/Pause, Next track | Media keys, so Spotify or whatever is playing |
+| Volume −, Volume +, Mute PC | System volume |
+| Virtual cam | OBS virtual camera on or off |
+| Transition | Turns on OBS studio mode, then each tap sends preview to program |
+| Thanks | Types a chat message into whatever window has focus |
+| YT Studio, Twitch | Opens YouTube Studio or the Twitch dashboard on the PC |
+
+### Connect OBS (once)
+
+1. In OBS 28 or newer, open Tools, then WebSocket Server Settings.
+2. Tick Enable WebSocket server. Leave the port at 4455 and keep authentication on.
+3. Click Show Connect Info and copy the server password.
+4. Open `%USERPROFILE%\.oldphonedeck\config.json` in Notepad, paste the password into `"password": ""`, save, and restart OldPhoneDeck.
+
+The top line of the Stream page says what's wrong if OBS isn't reachable, such as OBS not running or a wrong password.
+
+### Discord mute and deafen (once)
+
+Discord has no open way for other apps to mute you, so these buttons press keyboard shortcuts.
+
+1. In Discord, open User Settings, then Keybinds, then Add a Keybind.
+2. Pick Toggle Mute, click the shortcut box and press `Ctrl+Shift+Alt+M`.
+3. Add another for Toggle Deafen with `Ctrl+Shift+Alt+D`.
+
+Discord shows no mute state to other apps either, so these two buttons don't change colour.
+
+### Change the buttons
+
+Edit the `buttons` list in `config.json` and restart. Each button has a `type`, a `label`, an optional second line `sub`, an optional `icon` and `color`, plus the field its type needs:
+
+| type | Needs | Example |
+| --- | --- | --- |
+| `obs` | `action`: `stream`, `record`, `pause`, `replay`, `vcam`, `mic`, `desktop` or `studio` | `{"type": "obs", "action": "replay", "label": "Clip"}` |
+| `hotkey` | `keys`, such as `ctrl+shift+f13` | `{"type": "hotkey", "keys": "ctrl+alt+s", "label": "Screenshot"}` |
+| `media` | `action`: `playpause`, `next` or `previous` | |
+| `volume` | `action`: `up`, `down` or `mute` | |
+| `text` | `text` to type | `{"type": "text", "text": "!socials", "label": "Socials"}` |
+| `url` | an `http` or `https` link | `{"type": "url", "url": "https://twitch.tv/yourname", "label": "Channel"}` |
+| `sound` | `file`, a file in the sounds folder | `{"type": "sound", "file": "airhorn.mp3", "label": "Airhorn"}` |
+
+Colours: `indigo`, `teal`, `red`, `purple`, `green`, `orange`, `blue`, `pink`, `yellow`. Icons: `broadcast`, `rec`, `pause`, `clip`, `camera`, `transition`, `mic`, `mic-off`, `speaker`, `speaker-off`, `headphones`, `keyboard`, `playpause`, `next`, `prev`, `vol-up`, `vol-down`, `vol-mute`, `chat`, `link`, `note`, `stop`.
+
+A phone shows about 18 buttons (fewer if OBS has more than five scenes); a tablet shows more. The phone can only press buttons from this list, by number. It never sends its own keystrokes, text or links to the PC.
+
+## Sounds page (Windows)
+
+Put `.mp3` or `.wav` files in `%USERPROFILE%\.oldphonedeck\sounds` and they appear as buttons, named after the file. A new sound replaces the one playing, and Stop silences it. Sounds play through the PC's default speakers, so OBS picks them up with desktop audio.
 
 ### Build it yourself
 
@@ -94,15 +158,17 @@ The design is sound for a home network. Every request except the page shell need
 
 Points worth knowing, and what the Windows server does about them:
 
-1. Traffic is plain HTTP, so the token travels in the clear on your Wi-Fi. Anyone who can sniff that network can lift it. Fine at home, not on office or café Wi-Fi. Wired mode (above) removes this for Android.
+1. Traffic is plain HTTP, so the token travels in the clear on your Wi-Fi. Anyone who can sniff that network can lift it. Fine at home, not on office or café Wi-Fi. Wired mode (above) removes this for Android. With the Stream page, a lifted token can also end your stream or type in your chat, which is one more reason to use wired mode.
 2. Take note sends text to the Claude desktop app and presses Return. Anyone with the token can therefore start Claude chats on your computer. If your Claude app has connectors or local tools enabled, treat the token as access to those too. The Windows server caps notes at 4,000 characters and has `--no-autosend`.
 3. On Mac, the Accessibility permission goes to Terminal (or whatever runs the server), so every script you run from Terminal gets it as well. Windows needs no such permission.
 4. The Mac server reads request bodies up to 512 MB before checking the token, so anyone on the network can make it buffer a lot of memory. The Windows server checks the token first and caps bodies at 64 KB.
 5. The optional HTTPS setup installs a home-made root CA on the iPhone. Its private key sits unencrypted in `~/.oldphonedeck/tls/ca.key` on the Mac and the CA has no name constraints, so anyone who copies that key can intercept the phone's traffic to any site. Skip that setup unless you need the camera or mic, and delete the profile from the phone if you stop using it.
 6. The Mac's token compare isn't constant-time. Minor on a LAN. The Windows server uses a constant-time compare and a longer token (16 characters instead of 12).
 
+The OBS WebSocket password sits in plain text in `config.json`, readable only by your Windows account. OldPhoneDeck only connects to OBS on this PC (`127.0.0.1`) unless you change `host`.
+
 To issue a new token on either system, delete `.oldphonedeck/token` in your home folder and restart the server.
 
 ## Not tested on real hardware
 
-The Windows server compiles and its HTTP side was tested against the phone page in emulated Android and iPhone browsers. The Windows-only parts (Start menu apps, icons, media controls, Bluetooth batteries, the Claude deep link) follow documented APIs but haven't run on a real Windows PC yet. If one fails, the deck shows that widget empty and the rest keeps working. USB mode was tested with a stand-in for adb, not a real phone.
+The Windows server compiles and its HTTP side was tested against the phone page in emulated Android and iPhone browsers. The Windows-only parts (Start menu apps, icons, media controls, Bluetooth batteries, the Claude deep link) follow documented APIs but haven't run on a real Windows PC yet. If one fails, the deck shows that widget empty and the rest keeps working. USB mode was tested with a stand-in for adb, and OBS control against a stand-in OBS WebSocket server with real password login, not with OBS itself.

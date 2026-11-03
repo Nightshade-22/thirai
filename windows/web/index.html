@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<!-- OldPhoneDeck: a Stream Deck–style home for a phone in landscape.
+<!-- OldPhoneDeck: a touch control panel for a phone or tablet in landscape.
      Must run in iOS 8/9 Safari (iPhone 4S): ES5 syntax only, no fetch, no flex gap, no Intl.
      Modern iPhones additionally get a Phone tab (camera + mic to the Mac) and voice input for Ask Claude. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
@@ -175,6 +175,47 @@
     background: rgba(44,44,46,.95); padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 500; white-space: nowrap; display: none; }
   #login .sheet { top: 40px; text-align: center; }
   #code { width: 70%; height: 32px; border: 0; border-radius: 9px; background: #2c2c2e; color: #fff; text-align: center; font-size: 16px; }
+
+  /* ---- tablets: 3 rows of 5 or 6 keys ---- */
+  .c5 .key:nth-child(4n), .c6 .key:nth-child(4n) { margin-right: 12px; }
+  .c5 .key:nth-child(5n) { margin-right: 0; }
+  .c6 .key:nth-child(6n) { margin-right: 0; }
+  .c5 .key, .c6 .key { margin-bottom: 30px; }
+  #macName { display: inline-block; max-width: 96px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+
+  /* ---- Stream and Sounds pages ---- */
+  #sBar { position: absolute; height: 20px; font-size: 10.5px; font-weight: 600; color: #8e8e93; white-space: nowrap; overflow: hidden; }
+  .pill { display: inline-block; padding: 0 8px; height: 20px; line-height: 20px; border-radius: 10px; margin-right: 6px;
+    background: rgba(118,118,128,.24); color: #c7c7cc; font-weight: 700; letter-spacing: .4px;
+    -webkit-font-feature-settings: "tnum"; font-feature-settings: "tnum"; }
+  .pill.live { background: #ff3b30; color: #fff; }
+  .pill.warn { background: #ff9f0a; color: #1c1c1e; }
+  #sBar .err { color: #ff9f0a; }
+  .scene { position: absolute; border-radius: 10px; box-sizing: border-box; padding: 0 6px; text-align: center;
+    background: rgba(118,118,128,.18); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+    color: #e5e5ea; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .scene.cur { background: #0a84ff; color: #fff; box-shadow: none; }
+  .sbtn { position: absolute; border-radius: 14px; box-sizing: border-box; padding-top: 7px; text-align: center; overflow: hidden;
+    color: #c7c7cc; background: linear-gradient(180deg, #303036 0%, #1b1b1f 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 #0b0b0d, 0 4px 10px rgba(0,0,0,.35); }
+  .sbtn svg { display: block; margin: 0 auto; }
+  .sbtn b { display: block; margin-top: 3px; padding: 0 4px; font-size: 10.5px; font-weight: 600; color: #f5f5f7;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sbtn span { display: block; margin-top: 1px; padding: 0 4px; font-size: 9px; color: #8e8e93;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; -webkit-font-feature-settings: "tnum"; font-feature-settings: "tnum"; }
+  .sbtn.c-indigo { color: #7d7aff; } .sbtn.c-teal { color: #40c8e0; } .sbtn.c-red { color: #ff453a; }
+  .sbtn.c-purple { color: #bf5af2; } .sbtn.c-green { color: #30d158; } .sbtn.c-orange { color: #ff9f0a; }
+  .sbtn.c-blue { color: #0a84ff; } .sbtn.c-pink { color: #ff375f; } .sbtn.c-yellow { color: #ffd60a; }
+  .sbtn.live { background: linear-gradient(180deg, #ff453a 0%, #c9271d 100%); color: #fff; }
+  .sbtn.on { background: linear-gradient(180deg, #34c759 0%, #248a3d 100%); color: #fff; }
+  .sbtn.warn { background: linear-gradient(180deg, #ffb340 0%, #d98200 100%); color: #1c1c1e; }
+  .sbtn.live b, .sbtn.live span, .sbtn.on b, .sbtn.on span { color: #fff; }
+  .sbtn.warn b, .sbtn.warn span { color: #1c1c1e; }
+  .sbtn.muted { color: #ff453a; box-shadow: inset 0 0 0 1.5px rgba(255,69,58,.75), 0 2px 0 #0b0b0d; }
+  .sbtn.muted span { color: #ff453a; }
+  .sbtn.off, .sbtn.dim { opacity: .4; }
+  .sbtn.down, .scene.down { -webkit-transform: translateY(1px) scale(.97); transform: translateY(1px) scale(.97); }
+  .smsg { position: absolute; font-size: 11px; line-height: 1.45; color: #8e8e93; text-align: center; }
 </style>
 </head>
 <body>
@@ -222,6 +263,19 @@
     </div>
   </div>
 
+  <!-- Stream: OBS scenes, live / record status and the action buttons from config.json -->
+  <div id="stream" class="view">
+    <div id="sBar"></div>
+    <div id="sScenes"></div>
+    <div id="sGrid"></div>
+  </div>
+
+  <!-- Sounds: files from the sounds folder on the computer -->
+  <div id="sounds" class="view">
+    <div id="sndGrid"></div>
+    <div id="sndMsg" class="smsg"></div>
+  </div>
+
   <div id="status">
     <div id="clock"><span id="time">–</span><span id="ampm"></span><span id="date"></span></div>
     <div id="seg"><div data-view="deck" class="on">Deck</div><div data-view="phone">Phone</div></div>
@@ -264,7 +318,8 @@
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
-  var APP_SLOTS = 7;   // 8 keys: 7 apps + Ask Claude
+  var APP_SLOTS = 7;   // 8 keys: 7 apps + Take note (tablets: 14 or 17 apps)
+  var tablet = Math.min(screen.width, screen.height) >= 600;   // iPads and Android tablets, old or new
   var modern = 'isSecureContext' in window;   // iOS 11.1+; the 4S is never "modern"
   var android = /Android/i.test(navigator.userAgent);
   var HOST = 'Mac';        // what the computer is called in messages; the Windows server reports os=windows
@@ -342,6 +397,7 @@
     var aw = iw - ins.l - ins.r, ah = ih - ins.t - ins.b;
     portrait = modern && ah > aw * 1.2;
     if (portrait) { W = 360; H = Math.max(520, Math.round(360 * ah / aw)); }
+    else if (tablet) { H = 480; W = Math.max(640, Math.min(1040, Math.round(480 * aw / ah))); }
     else { H = 320; W = Math.max(480, Math.min(760, Math.round(320 * aw / ah))); }
     var s = Math.min(aw / W, ah / H), st = $('stage');
     st.style.width = W + 'px'; st.style.height = H + 'px';
@@ -353,6 +409,7 @@
   function layout() {
     // Compact widgets: Internet (number + small graph) and Batteries (icon + %), stacked in one narrow column.
     var net = $('net'), bat = $('bat'), cardW, netH = 104, batH;
+    if (!tablet || portrait) { $('stage').className = ''; $('keys').style.width = '316px'; setSlots(7); }
     net.className = bat.className = 'card';
     $('hint').style.display = 'none';
     if (portrait) {
@@ -368,6 +425,23 @@
       var pvH = Math.round((W - 32) * 3 / 4);
       px($('pvBox'), { left: 16, top: 72, width: W - 32, height: pvH });
       px($('pCtl'), { left: 16, top: 72 + pvH + 14, width: W - 32 });
+    } else if (tablet) {
+      // Tablet: 3 rows of 5 or 6 keys, now playing below, widgets in a taller right column.
+      var cols = W >= 820 ? 6 : 5, gridW = cols * 70 + (cols - 1) * 12;
+      $('stage').className = 'c' + cols;
+      setSlots(cols * 3 - 1);
+      $('seg').style.top = '11px';
+      cardW = W >= 820 ? 190 : 170;
+      var tRight = W - 16, tCol = tRight - cardW, tArea = tCol - 32;
+      $('keys').style.width = gridW + 'px';
+      px($('keys'), { left: 16 + Math.max(0, (tArea - gridW) / 2), top: 60 });
+      px($('music'), { left: 16, top: 60 + 3 * 120 - 18, width: Math.max(gridW, tArea) });
+      netH = 128;
+      batH = (60 + 3 * 120 - 18 + 52) - (60 + netH + 12);
+      px(net, { left: tCol, top: 60, width: cardW, height: netH });
+      px(bat, { left: tCol, top: 60 + netH + 12, width: cardW });
+      px($('pvBox'), { left: 16, top: 52, width: W - 32 - 192, height: H - 68 });
+      px($('pCtl'), { left: W - 16 - 180, top: 52, width: 180 });
     } else {
       $('seg').style.top = '11px';
       cardW = W >= 640 ? 150 : 128;
@@ -388,26 +462,49 @@
     spark.width = sw * 2; spark.height = sh * 2;
     px(spark, { width: sw, height: sh });
     drawSpark(lastHistory); renderBatteries(lastBatteries);
+    layoutStream(); layoutSounds();
+  }
+  function setSlots(n) {
+    if (n === APP_SLOTS) return;
+    APP_SLOTS = n;
+    if (launcher && launcher.all && launcher.all.length) renderKeys();
   }
   window.addEventListener('resize', fit);
   window.addEventListener('orientationchange', function () { setTimeout(fit, 300); });
 
   // ---------- views (Deck, plus Phone on modern iPhones) ----------
   var view = 'deck';
+  var VIEWS = ['deck', 'stream', 'sounds', 'phone'];
+  var TAB_NAMES = { deck: 'Deck', stream: 'Stream', sounds: 'Sounds', phone: 'Phone' };
+  var tabs = phoneTab ? ['deck', 'phone'] : ['deck'];
   function show(name) {
     view = name;
-    $('deck').className = 'view' + (name === 'deck' ? ' on' : '');
-    $('phone').className = 'view' + (name === 'phone' ? ' on' : '');
+    for (var v = 0; v < VIEWS.length; v++) $(VIEWS[v]).className = 'view' + (VIEWS[v] === name ? ' on' : '');
     var segs = $('seg').children;
     for (var i = 0; i < segs.length; i++) segs[i].className = segs[i].getAttribute('data-view') === name ? 'on' : '';
-    if (name === 'phone') phoneEnter(); else pollStats();
+    if (name === 'phone') phoneEnter();
+    else if (name === 'deck') pollStats();
+    else pollStream();
     store('view', name);
   }
-  if (phoneTab) {
-    $('seg').style.display = 'block';
-    var segs = $('seg').children;
-    for (var i = 0; i < segs.length; i++) (function (s) { tap(s, function () { show(s.getAttribute('data-view')); }); })(segs[i]);
+  // The switcher at the top: Deck always, Stream + Sounds on the Windows server, Phone on the Mac (modern iPhone).
+  function buildTabs() {
+    var seg = $('seg');
+    seg.innerHTML = '';
+    if (tabs.length < 2) { seg.style.display = 'none'; return; }
+    seg.style.display = 'block';
+    seg.style.width = tabs.length * 66 + 'px';
+    seg.style.marginLeft = -tabs.length * 33 + 'px';
+    tabs.forEach(function (t) {
+      var d = document.createElement('div');
+      d.setAttribute('data-view', t);
+      d.textContent = TAB_NAMES[t];
+      d.className = t === view ? 'on' : '';
+      tap(d, function () { show(t); });
+      seg.appendChild(d);
+    });
   }
+  buildTabs();
   function sheet(id, on) { $(id).className = 'scrim' + (on ? ' on' : ''); }
   window.deckHome = function () { sheet('claude', false); sheet('edit', false); show('deck'); };
 
@@ -502,7 +599,7 @@
       });
       row.addEventListener('click', function () {
         if (on) draft.splice(idx, 1);
-        else if (full) return toast('All 7 keys are used: remove one first');
+        else if (full) return toast('All ' + APP_SLOTS + ' keys are used: remove one first');
         else draft.push(a.path);
         renderEditor();
       });
@@ -813,6 +910,207 @@
     });
   }
 
+  // ---------- Stream page (OBS + buttons from config.json) and Sounds page ----------
+  var SICONS = {
+    broadcast: '<circle cx="10" cy="10" r="2.2" fill="currentColor"/><path d="M6.2 13.8a5.4 5.4 0 0 1 0-7.6M13.8 6.2a5.4 5.4 0 0 1 0 7.6M3.6 16.4a9 9 0 0 1 0-12.8M16.4 3.6a9 9 0 0 1 0 12.8"/>',
+    rec: '<circle cx="10" cy="10" r="6.5"/><circle cx="10" cy="10" r="3.2" fill="currentColor"/>',
+    pause: '<path d="M7 4.5v11M13 4.5v11" stroke-width="2.4"/>',
+    clip: '<rect x="2.5" y="4.5" width="15" height="11" rx="2"/><path d="M8.5 7.6v4.8l4-2.4z" fill="currentColor"/>',
+    camera: '<rect x="2.5" y="5.5" width="11" height="9" rx="2"/><path d="M13.5 9l4-2.5v7l-4-2.5"/>',
+    transition: '<path d="M3 7h12l-3-3M17 13H5l3 3"/>',
+    mic: '<rect x="7.5" y="2.5" width="5" height="9" rx="2.5"/><path d="M4.5 9.5a5.5 5.5 0 0 0 11 0M10 15v2.5"/>',
+    'mic-off': '<rect x="7.5" y="2.5" width="5" height="9" rx="2.5"/><path d="M4.5 9.5a5.5 5.5 0 0 0 11 0M10 15v2.5M3 3l14 14"/>',
+    speaker: '<path d="M3.5 7.5h3l4-3.5v12l-4-3.5h-3z"/><path d="M13.5 7a4 4 0 0 1 0 6M15.8 4.8a7 7 0 0 1 0 10.4"/>',
+    'speaker-off': '<path d="M3.5 7.5h3l4-3.5v12l-4-3.5h-3z"/><path d="M13.5 7.5l4 5M17.5 7.5l-4 5"/>',
+    headphones: '<path d="M3.5 13v-2.5a6.5 6.5 0 0 1 13 0V13"/><rect x="2.5" y="11.5" width="3.5" height="5.5" rx="1.2"/><rect x="14" y="11.5" width="3.5" height="5.5" rx="1.2"/>',
+    keyboard: '<rect x="2" y="5" width="16" height="10" rx="2"/><path d="M5 8.5h.01M8 8.5h.01M11 8.5h.01M14 8.5h.01M6.5 12h7"/>',
+    playpause: '<path d="M3.5 5v10l6-5z" fill="currentColor"/><path d="M13 5v10M16.5 5v10"/>',
+    next: '<path d="M4 5v10l7-5z" fill="currentColor"/><path d="M15 5v10"/>',
+    prev: '<path d="M16 5v10l-7-5z" fill="currentColor"/><path d="M5 5v10"/>',
+    'vol-up': '<path d="M2.5 7.5h3l4-3.5v12l-4-3.5h-3z"/><path d="M12.5 10h5M15 7.5v5"/>',
+    'vol-down': '<path d="M2.5 7.5h3l4-3.5v12l-4-3.5h-3z"/><path d="M12.5 10h5"/>',
+    chat: '<path d="M3 5.5A2.5 2.5 0 0 1 5.5 3h9A2.5 2.5 0 0 1 17 5.5v6a2.5 2.5 0 0 1-2.5 2.5H9l-4 3v-3h.5A2.5 2.5 0 0 1 3 11.5z"/>',
+    link: '<path d="M8.5 11.5a3 3 0 0 0 4.2 0l2.6-2.6a3 3 0 0 0-4.2-4.2l-1 1M11.5 8.5a3 3 0 0 0-4.2 0l-2.6 2.6a3 3 0 0 0 4.2 4.2l1-1"/>',
+    note: '<path d="M7.5 15V4.5l9-2V13"/><circle cx="5.5" cy="15" r="2"/><circle cx="14.5" cy="13" r="2"/>',
+    stop: '<rect x="5" y="5" width="10" height="10" rx="1.5" fill="currentColor"/>'
+  };
+  SICONS['vol-mute'] = SICONS['speaker-off'];
+  function svgIcon(name) {
+    return '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+      'stroke-linecap="round" stroke-linejoin="round">' + (SICONS[name] || SICONS.keyboard) + '</svg>';
+  }
+  var DEFAULT_ICON = {
+    'obs:stream': 'broadcast', 'obs:record': 'rec', 'obs:pause': 'pause', 'obs:replay': 'clip', 'obs:vcam': 'camera',
+    'obs:studio': 'transition', 'obs:mic': 'mic', 'obs:desktop': 'speaker', 'media:playpause': 'playpause',
+    'media:next': 'next', 'media:previous': 'prev', 'volume:up': 'vol-up', 'volume:down': 'vol-down',
+    'volume:mute': 'vol-mute', 'hotkey:': 'keyboard', 'text:': 'chat', 'url:': 'link', 'sound:': 'note'
+  };
+  var streamData = null, streamAt = 0, streamSig = '', soundSig = '';
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function dur(ms) {
+    var t = Math.floor(ms / 1000), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), sec = t % 60;
+    return (h ? h + ':' + pad2(m) : m) + ':' + pad2(sec);
+  }
+  function act(body, quiet) {
+    xhr('POST', url('/action'), body, function (s, text) {
+      if (!quiet || s !== 200) toast(text || (s === 200 ? 'Done' : 'Could not reach the ' + HOST));
+      setTimeout(pollStream, 200);
+    });
+  }
+  // What a button looks like right now: { cls, icon, label, sub }.
+  function buttonState(b, o, elapsed) {
+    var st = { cls: b.color ? 'c-' + b.color : '', icon: b.icon || DEFAULT_ICON[b.type + ':' + (b.type === 'obs' || b.type === 'media' || b.type === 'volume' ? b.action : '')], label: b.label, sub: b.sub || '' };
+    if (b.type !== 'obs') return st;
+    if (!o.connected) { st.cls = 'off'; st.sub = 'OBS offline'; return st; }
+    switch (b.action) {
+      case 'stream':
+        if (o.live) { st.cls = 'live'; st.label = 'End stream'; st.sub = dur(o.liveMs + elapsed); }
+        else st.sub = 'Hold to start';
+        break;
+      case 'record':
+        if (o.rec) { st.cls = o.recPaused ? 'warn' : 'live'; st.label = 'Stop rec'; st.sub = dur(o.recMs + (o.recPaused ? 0 : elapsed)); }
+        break;
+      case 'pause':
+        if (!o.rec) { st.cls = 'dim'; st.sub = 'Not recording'; }
+        else if (o.recPaused) { st.cls = 'warn'; st.label = 'Resume'; st.sub = 'Paused'; }
+        break;
+      case 'replay': st.cls = o.replay ? 'on' : ''; st.sub = o.replay ? 'Tap to save' : 'Tap to arm'; break;
+      case 'vcam': if (o.vcam) { st.cls = 'on'; st.sub = 'On'; } break;
+      case 'studio': if (o.studio) { st.cls = 'on'; st.sub = 'Studio mode'; } break;
+      case 'mic':
+      case 'desktop':
+        var a = b.action === 'mic' ? o.mic : o.desktop;
+        if (!a) { st.cls = 'dim'; st.sub = 'No source'; }
+        else if (a.muted) { st.cls = 'muted'; st.icon = b.action === 'mic' ? 'mic-off' : 'speaker-off'; st.sub = 'Muted'; }
+        else st.sub = 'Live';
+        break;
+    }
+    return st;
+  }
+  function makeButton(onTap, onHold) {
+    var el = document.createElement('div');
+    el.className = 'sbtn';
+    el.innerHTML = '<i></i><b></b><span></span>';
+    el.iconName = '';
+    tap(el, onTap, onHold);
+    return el;
+  }
+  function paintButton(el, st) {
+    el.className = 'sbtn ' + st.cls;
+    if (el.iconName !== st.icon) { el.firstChild.innerHTML = svgIcon(st.icon); el.iconName = st.icon; }
+    el.children[1].textContent = st.label;
+    el.children[2].textContent = st.sub;
+  }
+  function pollStream() {
+    if (view !== 'stream' && view !== 'sounds') return;
+    xhr('GET', url('/stream'), null, function (s, text) {
+      $('link').className = s === 200 ? 'ok' : '';
+      if (s !== 200) return;
+      try { streamData = JSON.parse(text); } catch (e) { return; }
+      streamAt = Date.now();
+      renderStream(); renderSounds();
+    });
+  }
+  setInterval(pollStream, 1000);
+  function renderStream() {
+    if (!streamData) return;
+    var o = streamData.obs, buttons = streamData.buttons || [], elapsed = 0;
+    var sig = JSON.stringify([buttons, o.scenes]);
+    if (sig !== streamSig) {
+      // Structure changed (first load, config edited, scenes added): rebuild, then lay out.
+      streamSig = sig;
+      var sc = $('sScenes'), grid = $('sGrid');
+      sc.innerHTML = ''; grid.innerHTML = '';
+      (o.scenes || []).forEach(function (name) {
+        var d = document.createElement('div');
+        d.className = 'scene'; d.textContent = name; d.sceneName = name;
+        tap(d, function () { act('kind=scene&name=' + encodeURIComponent(name), true); });
+        sc.appendChild(d);
+      });
+      buttons.forEach(function (b, i) {
+        var press = function () { act('kind=button&i=' + i); };
+        var el = b.type === 'obs' && b.action === 'stream'
+          // Going live or ending a stream by accident is costly: it needs a press-and-hold.
+          ? makeButton(function () { toast(streamData.obs.live ? 'Hold to end the stream' : 'Hold to go live'); }, press)
+          : makeButton(press);
+        grid.appendChild(el);
+      });
+      layoutStream();
+    }
+    // Live state: status pills, current scene, button colours and timers.
+    var bar = $('sBar');
+    if (!o.connected) {
+      bar.innerHTML = '<span class="pill">OBS</span><span class="err"></span>';
+      bar.lastChild.textContent = o.error || 'Connecting to OBS…';
+    } else {
+      var live = '<span class="pill' + (o.live ? ' live' : '') + '">' + (o.live ? 'LIVE ' + dur(o.liveMs) : 'OFFLINE') + '</span>';
+      var rec = o.rec ? '<span class="pill ' + (o.recPaused ? 'warn' : 'live') + '">' + (o.recPaused ? 'PAUSED ' : 'REC ') + dur(o.recMs) + '</span>' : '';
+      bar.innerHTML = live + rec + '<span></span>';
+      bar.lastChild.textContent = Math.round(o.fps) + ' fps · CPU ' + Math.round(o.cpu) + '%' +
+        (o.live ? ' · ' + o.dropped.toFixed(1) + '% dropped' : '');
+    }
+    var scenes = $('sScenes').children;
+    for (var i = 0; i < scenes.length; i++) scenes[i].className = 'scene' + (scenes[i].sceneName === o.scene ? ' cur' : '');
+    var els = $('sGrid').children;
+    for (var j = 0; j < els.length && j < buttons.length; j++) paintButton(els[j], buttonState(buttons[j], o, elapsed));
+  }
+  function layoutStream() {
+    var sc = $('sScenes').children, els = $('sGrid').children, cw = W - 32, y = 52;
+    px($('sBar'), { left: 16, top: y, width: cw });
+    y += 28;
+    var scCols = portrait ? 3 : tablet ? (W >= 820 ? 8 : 6) : 5, scH = tablet ? 44 : 34;
+    var scRows = Math.min(2, Math.ceil(sc.length / scCols)), scW = (cw - (scCols - 1) * 8) / scCols;
+    for (var i = 0; i < sc.length; i++) {
+      var r = Math.floor(i / scCols);
+      sc[i].style.display = r < scRows ? 'block' : 'none';
+      px(sc[i], { left: 16 + (i % scCols) * (scW + 8), top: y + r * (scH + 8), width: scW, height: scH });
+      sc[i].style.lineHeight = scH + 'px';
+    }
+    y += scRows * (scH + 8);
+    gridLayout(els, y, portrait ? 4 : tablet ? (W >= 820 ? 8 : 6) : 6);
+  }
+  // Lays buttons out in `cols` columns between top y and the bottom of the stage; hides what can't fit.
+  function gridLayout(els, y, cols) {
+    var cw = W - 32, gap = 8, avail = H - 14 - y, n = els.length;
+    if (!n) return;
+    var rows = Math.ceil(n / cols), maxH = tablet ? 96 : 78, minH = tablet ? 64 : 52;
+    var bh = Math.min(maxH, Math.floor((avail - (rows - 1) * gap) / rows));
+    if (bh < minH) { rows = Math.max(1, Math.floor((avail + gap) / (minH + gap))); bh = Math.floor((avail - (rows - 1) * gap) / rows); }
+    var bw = (cw - (cols - 1) * gap) / cols;
+    for (var i = 0; i < n; i++) {
+      var r = Math.floor(i / cols);
+      els[i].style.display = r < rows ? 'block' : 'none';
+      px(els[i], { left: 16 + (i % cols) * (bw + gap), top: y + r * (bh + gap), width: bw, height: bh });
+      els[i].style.paddingTop = Math.max(5, Math.round((bh - 46) / 2)) + 'px';
+    }
+  }
+  function renderSounds() {
+    if (!streamData) return;
+    var list = streamData.sounds || [], sig = list.join('\n');
+    if (sig === soundSig && $('sndGrid').children.length) return;
+    soundSig = sig;
+    var grid = $('sndGrid');
+    grid.innerHTML = '';
+    $('sndMsg').textContent = list.length ? '' :
+      'No sounds yet. On the ' + HOST + ', put .mp3 or .wav files in the "sounds" folder inside ".oldphonedeck" in your user folder.';
+    if (list.length) {
+      var stop = makeButton(function () { act('kind=stopsound', true); });
+      paintButton(stop, { cls: 'c-red', icon: 'stop', label: 'Stop', sub: '' });
+      grid.appendChild(stop);
+    }
+    list.forEach(function (f, i) {
+      var el = makeButton(function () { act('kind=sound&name=' + encodeURIComponent(f), true); });
+      paintButton(el, { cls: ['c-teal', 'c-indigo', 'c-orange', 'c-pink', 'c-green', 'c-purple', 'c-yellow', 'c-blue'][i % 8],
+        icon: 'note', label: f.replace(/\.(mp3|wav)$/i, ''), sub: '' });
+      grid.appendChild(el);
+    });
+    layoutSounds();
+  }
+  function layoutSounds() {
+    px($('sndMsg'), { left: 40, top: H / 2 - 30, width: W - 80 });
+    gridLayout($('sndGrid').children, 56, portrait ? 3 : tablet ? (W >= 820 ? 8 : 6) : 5);
+  }
+
   // ---------- boot ----------
   function connect() {
     xhr('GET', url('/info'), null, function (s, text) {
@@ -823,9 +1121,14 @@
       try { info = JSON.parse(text) || {}; } catch (e) {}
       if (info.os === 'windows') HOST = 'PC';
       // No HTTPS on this server, or an Android phone on plain http (the camera setup is iPhone-only).
-      if (info.https === false || (android && !window.isSecureContext)) { phoneTab = false; $('seg').style.display = 'none'; }
+      if (info.https === false || (android && !window.isSecureContext)) phoneTab = false;
+      tabs = ['deck'];
+      if (info.stream) tabs.push('stream', 'sounds');
+      if (phoneTab) tabs.push('phone');
+      buildTabs();
       loadKeys();
-      show(phoneTab && store('view') === 'phone' ? 'phone' : 'deck');
+      var want = store('view');
+      show(tabs.indexOf(want) >= 0 ? want : 'deck');
       if (/edit/.test(location.search)) setTimeout(openEditor, 300);
     });
   }

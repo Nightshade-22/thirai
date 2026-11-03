@@ -17,6 +17,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -480,4 +481,124 @@ func netCounters() (uint64, uint64, bool) {
 // hideConsole stops helper programs (adb) from flashing a console window.
 func hideConsole(c *exec.Cmd) {
 	c.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000} // CREATE_NO_WINDOW
+}
+
+// ---------- streamer actions ----------
+
+var (
+	procSendInput     = user32.NewProc("SendInput")
+	procMciSendString = syscall.NewLazyDLL("winmm.dll").NewProc("mciSendStringW")
+	soundCmds         = make(chan string, 4)
+	soundLoopStarted  sync.Once
+)
+
+func keyDown(vk uint16, ext bool) {
+	var f uintptr
+	if ext {
+		f = 0x1
+	}
+	procKeybdEvent.Call(uintptr(vk), 0, f, 0)
+}
+
+func keyUp(vk uint16, ext bool) {
+	var f uintptr = 0x2
+	if ext {
+		f |= 0x1
+	}
+	procKeybdEvent.Call(uintptr(vk), 0, f, 0)
+}
+
+func isExtendedKey(vk uint16) bool {
+	switch vk {
+	case 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x2D, 0x2E, 0x5B:
+		return true
+	}
+	return false
+}
+
+// sendHotkey presses a combination such as ctrl+shift+alt+m, the way a keyboard would.
+func sendHotkey(keys string) error {
+	mods, key, err := parseHotkey(keys)
+	if err != nil {
+		return err
+	}
+	for _, m := range mods {
+		keyDown(m, m == 0x5B)
+	}
+	keyDown(key, isExtendedKey(key))
+	time.Sleep(30 * time.Millisecond)
+	keyUp(key, isExtendedKey(key))
+	for i := len(mods) - 1; i >= 0; i-- {
+		keyUp(mods[i], mods[i] == 0x5B)
+	}
+	return nil
+}
+
+func volumeKey(action string) bool {
+	vk := map[string]uintptr{"mute": 0xAD, "down": 0xAE, "up": 0xAF}[action]
+	if vk == 0 {
+		return false
+	}
+	pressKey(vk, true)
+	return true
+}
+
+// keyInput is Win32's INPUT for a keyboard event on 64-bit Windows (40 bytes).
+type keyInput struct {
+	typ   uint32
+	_     uint32
+	vk    uint16
+	scan  uint16
+	flags uint32
+	time  uint32
+	_     uint32
+	extra uintptr
+	_     [8]byte
+}
+
+// typeText types text into the focused window as Unicode keystrokes (chat boxes, notes).
+func typeText(s string) {
+	units := syscall.StringToUTF16(s)
+	units = units[:len(units)-1] // drop the terminating NUL
+	inputs := make([]keyInput, 0, len(units)*2)
+	for _, u := range units {
+		inputs = append(inputs,
+			keyInput{typ: 1, scan: u, flags: 0x4},       // KEYEVENTF_UNICODE
+			keyInput{typ: 1, scan: u, flags: 0x4 | 0x2}) // + KEYEVENTF_KEYUP
+	}
+	if len(inputs) > 0 {
+		procSendInput.Call(uintptr(len(inputs)), uintptr(unsafe.Pointer(&inputs[0])), unsafe.Sizeof(inputs[0]))
+	}
+}
+
+func shellOpenURL(u string) { shellOpen(u) }
+
+func mci(cmd string) {
+	p, err := syscall.UTF16PtrFromString(cmd)
+	if err == nil {
+		procMciSendString.Call(uintptr(unsafe.Pointer(p)), 0, 0, 0)
+	}
+}
+
+// Sounds play through the default output, so OBS picks them up with desktop audio.
+// MCI is driven from one locked thread; a new sound replaces the one playing.
+func soundLoop() {
+	runtime.LockOSThread()
+	for c := range soundCmds {
+		mci("close deck")
+		if c != "" {
+			mci(`open "` + c + `" type mpegvideo alias deck`)
+			mci("play deck")
+		}
+	}
+}
+
+func playSound(path string) {
+	soundLoopStarted.Do(func() { go soundLoop() })
+	soundCmds <- path
+}
+
+func stopSound() {
+	soundLoopStarted.Do(func() { go soundLoop() })
+	soundCmds <- ""
 }

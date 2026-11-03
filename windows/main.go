@@ -1,5 +1,5 @@
 // OldPhoneDeck for Windows: serves the same phone page and HTTP API as the Mac version,
-// so any old iPhone or Android phone with a browser becomes a Stream Deck-style panel for a PC.
+// so any old iPhone or Android phone with a browser becomes a touch control panel for a PC.
 package main
 
 import (
@@ -178,7 +178,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	switch {
 	case r.Method == "GET" && r.URL.Path == "/info":
-		writeJSON(w, map[string]interface{}{"camera": false, "os": "windows", "https": false})
+		writeJSON(w, map[string]interface{}{"camera": false, "os": "windows", "https": false, "stream": true})
+	case r.Method == "GET" && r.URL.Path == "/stream":
+		writeJSON(w, streamState())
+	case r.Method == "POST" && r.URL.Path == "/action":
+		handleAction(w, r)
 	case r.Method == "GET" && r.URL.Path == "/stats":
 		writeJSON(w, statsSnapshot())
 	case r.Method == "POST" && r.URL.Path == "/speedtest":
@@ -269,16 +273,18 @@ func writeManifest(w http.ResponseWriter) {
 
 func main() {
 	flag.Usage = func() {
-		fmt.Println("oldphonedeck: turn an old phone into a Stream Deck-style control panel for your PC")
+		fmt.Println("oldphonedeck: turn an old phone into a touch control panel for your PC")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
 	home, _ := os.UserHomeDir()
 	configDir = filepath.Join(home, ".oldphonedeck")
 	token = loadToken()
+	loadConfig()
 
 	platformInit()
 	startStats()
+	startOBS()
 
 	// USB mode listens on this PC only; the phone reaches it through adb's reverse tunnel.
 	addr := fmt.Sprintf(":%d", *port)
