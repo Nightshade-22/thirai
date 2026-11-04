@@ -12,7 +12,7 @@ import (
 
 var demoApps = []App{
 	{Name: "Calculator", Path: "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"},
-	{Name: "Claude", Path: "Claude"},
+	{Name: "Google Chrome", Path: "Chrome"},
 	{Name: "File Explorer", Path: "Microsoft.Windows.Explorer"},
 	{Name: "Notepad", Path: "Microsoft.WindowsNotepad_8wekyb3d8bbwe!App"},
 	{Name: "OBS Studio", Path: "{6D809377-6AF0-444B-8957-A3773F02200E}\\obs-studio\\bin\\64bit\\obs64.exe"},
