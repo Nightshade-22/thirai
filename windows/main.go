@@ -285,6 +285,7 @@ func main() {
 	platformInit()
 	startStats()
 	startOBS()
+	startTwitch()
 
 	// USB mode listens on this PC only; the phone reaches it through adb's reverse tunnel.
 	addr := fmt.Sprintf(":%d", *port)
