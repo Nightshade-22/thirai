@@ -20,16 +20,16 @@ The Stream page (Windows) has a button for each OBS scene and buttons to go live
 
 The Sounds page (Windows) turns any `.mp3` or `.wav` in the sounds folder into a button. Sounds play through your speakers, so OBS picks them up.
 
-An Android phone can also run over a USB cable, with the PC closed to Wi-Fi entirely.
+By default the Windows server only talks to an Android phone over a USB cable, so nothing on your Wi-Fi can reach the PC. Wi-Fi mode, for iPhones, iPads and cable-free setups, is one switch away.
 
 ## Quick start on Windows
 
-1. Download `thirai-windows-x64.exe` from the [latest release](https://github.com/Nightshade-22/thirai/releases/latest) (`thirai-windows-arm64.exe` for Snapdragon laptops) and double-click it.
-2. Allow it on Private networks when Windows Firewall asks.
-3. Open the link it prints on your phone, then add it to the home screen.
-4. Hold any key to pick your apps.
+1. Download `thirai-windows-x64.exe` and `start-wifi.bat` from the [latest release](https://github.com/Nightshade-22/thirai/releases/latest) (`thirai-windows-arm64.exe` for Snapdragon laptops) into one folder.
+2. Android phone over a cable (the default and the safest): install adb once with `winget install Google.PlatformTools`, turn on USB debugging on the phone, plug it in and double-click the .exe. The deck opens on the phone by itself.
+3. iPhone, iPad, or no cable: double-click `start-wifi.bat` instead, allow it on Private networks when Windows Firewall asks, and scan the QR code in the window with the phone.
+4. Add the page to the home screen, then hold any key to pick your apps.
 
-To use a USB cable with an Android phone instead, run `start-usb.bat`. To connect OBS, Twitch and Discord, follow the [guide](docs/GUIDE.md#connect-obs-once).
+To connect OBS, Twitch and Discord, follow the [guide](docs/GUIDE.md#connect-obs-once).
 
 ## Quick start on a Mac
 
@@ -49,7 +49,7 @@ Then open the printed link on the phone. The full Mac setup, including the camer
 
 ## Security in one paragraph
 
-Every request needs a random access token, and the phone can only press buttons you've configured. On Wi-Fi the link travels as plain HTTP, so treat it like a password and use it on your home network only. Wired mode avoids the network altogether. Never port-forward Thirai to the internet. Details are in the [guide](docs/GUIDE.md#security-notes).
+Every request needs a random access token, and the phone can only press buttons you've configured. The Windows server listens on the USB cable only unless you turn Wi-Fi mode on. On Wi-Fi the link travels as plain HTTP, so treat it like a password and use Wi-Fi mode on your home network only. Never port-forward Thirai to the internet. Details are in the [guide](docs/GUIDE.md#security-notes).
 
 ## Contributing
 

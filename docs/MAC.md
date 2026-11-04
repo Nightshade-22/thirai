@@ -23,7 +23,7 @@ It prints a link like `http://192.168.x.x:8045/#k=<token>`. On the phone:
 2. Tap **Share → Add to Home Screen** and launch it from there to run it full screen.
 3. **Hold any key** to choose your apps.
 
-An Android phone works too: open the link in Chrome, then use the Chrome menu, Add to Home screen. For a USB cable instead of Wi-Fi, run `./usb-android.sh` alongside the server (see the [guide](GUIDE.md#wired-mode-usb-cable-android)).
+An Android phone works too: open the link in Chrome, then use the Chrome menu, Add to Home screen. For a USB cable instead of Wi-Fi, run `./usb-android.sh` alongside the server (see the [guide](GUIDE.md#usb-mode-the-default-android)).
 
 Tips for a dedicated desk display: set **Auto-Lock → Never**, and use **Guided Access** (Settings → Accessibility) to lock the phone to the deck.
 

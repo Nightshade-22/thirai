@@ -1,6 +1,6 @@
 # Release: publish a release on GitHub (Releases > Draft a new release, tag like v0.1.0).
 # This builds the Windows server and attaches thirai-windows-x64.exe, thirai-windows-arm64.exe,
-# start-usb.bat and SHA256SUMS.txt to that release.
+# start-usb.bat, start-wifi.bat and SHA256SUMS.txt to that release.
 # Only the release event triggers it: publishing from the website also creates the tag, and a second
 # trigger on the tag push would run the upload twice and fail on "already exists".
 name: Release
@@ -32,7 +32,7 @@ jobs:
           mkdir -p ../out
           GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o ../out/thirai-windows-x64.exe .
           GOOS=windows GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o ../out/thirai-windows-arm64.exe .
-          cp dist/start-usb.bat ../out/
+          cp dist/start-usb.bat dist/start-wifi.bat ../out/
           cd ../out && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
 
       - name: Attach the files to the release
