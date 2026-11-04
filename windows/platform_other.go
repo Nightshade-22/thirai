@@ -40,14 +40,13 @@ func platformInit() {
 		statsMu.Unlock()
 	}()
 }
-func hostName() string              { return "STUDIO-PC" }
-func listApps() []App               { return demoApps }
-func appIcon(string) []byte         { return nil }
-func launchApp(id string)           { fmt.Println("launch", id) }
-func claudeAsk(t string, send bool) { fmt.Printf("claude ask %q send=%v\n", t, send) }
-func claudeFocus()                  { fmt.Println("claude focus") }
-func openPlayer()                   { fmt.Println("open player") }
-func artwork() ([]byte, string)     { return nil, "" }
+func hostName() string          { return "STUDIO-PC" }
+func listApps() []App           { return demoApps }
+func appIcon(string) []byte     { return nil }
+func launchApp(id string)       { fmt.Println("launch", id) }
+func openNotes() error          { fmt.Println("open notes", ensureNotesFile()); return nil }
+func openPlayer()               { fmt.Println("open player") }
+func artwork() ([]byte, string) { return nil, "" }
 
 func mediaControl(cmd string) {
 	if cmd == "playpause" {
