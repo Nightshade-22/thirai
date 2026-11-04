@@ -192,8 +192,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		cmd := p("cmd")
 		if cmd == "open" {
 			go openPlayer()
+			logAction("Music player", "bringing it to the front", nil)
 		} else {
 			mediaControl(cmd)
+			logAction("Music "+map[string]string{"playpause": "play/pause", "next": "next", "previous": "previous"}[cmd], "media key pressed", nil)
 		}
 		text(w, 200, "ok")
 	case r.Method == "GET" && r.URL.Path == "/artwork":
@@ -240,6 +242,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		go launchApp(path)
+		logAction("Open "+appName(path), "opening the app", nil)
 		text(w, 200, "ok")
 	case r.Method == "POST" && r.URL.Path == "/claude":
 		t := strings.TrimSpace(p("text"))
@@ -248,8 +251,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		}
 		if t == "" {
 			go claudeFocus()
+			logAction("Take note", "opening Claude", nil)
 		} else {
 			go claudeAsk(t, p("send") == "1" && !*noAutoSend)
+			logAction("Take note", fmt.Sprintf("new Claude chat (%d characters)", len([]rune(t))), nil)
 		}
 		text(w, 200, "ok")
 	default:
@@ -357,4 +362,13 @@ func waitAndExit(code int) {
 	var s string
 	_, _ = fmt.Scanln(&s)
 	os.Exit(code)
+}
+
+func appName(path string) string {
+	for _, a := range listApps() {
+		if a.Path == path {
+			return a.Name
+		}
+	}
+	return "app"
 }

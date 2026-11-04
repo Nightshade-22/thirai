@@ -110,7 +110,7 @@ func startTwitch() {
 			pollTwitch()
 			select {
 			case <-twPoke:
-			case <-time.After(15 * time.Second):
+			case <-time.After(twitchPollEvery()):
 			}
 		}
 	}()
@@ -531,4 +531,12 @@ func twitchAction(b Button) (string, error) {
 		return name + " off", nil
 	}
 	return "", errors.New("unknown Twitch action " + b.Action)
+}
+
+// twitchPollEvery is 15 s; tests and demo recordings can shorten it with THIRAI_TWITCH_POLL.
+func twitchPollEvery() time.Duration {
+	if n, err := strconv.Atoi(os.Getenv("THIRAI_TWITCH_POLL")); err == nil && n > 0 {
+		return time.Duration(n) * time.Second
+	}
+	return 15 * time.Second
 }

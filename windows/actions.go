@@ -2,10 +2,12 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // streamState is what the Stream and Sounds pages poll.
@@ -16,7 +18,20 @@ func streamState() map[string]interface{} {
 		// The phone only needs what to draw; keystrokes, text and links stay on the computer.
 		buttons[i] = map[string]string{"type": b.Type, "label": b.Label, "sub": b.Sub, "action": b.Action, "icon": b.Icon, "color": b.Color, "value": b.Value}
 	}
-	return map[string]interface{}{"obs": obsSnapshot(), "twitch": twitchSnapshot(), "buttons": buttons, "sounds": listSounds()}
+	return map[string]interface{}{"obs": obsSnapshot(), "twitch": twitchSnapshot(), "buttons": buttons,
+		"sounds": listSounds(), "status": deckStatus()}
+}
+
+// deckStatus is the short OBS / Twitch / Discord summary shown in the top bar on every page.
+func deckStatus() map[string]interface{} {
+	o, t := obsSnapshot(), twitchSnapshot()
+	return map[string]interface{}{
+		"obs": map[string]interface{}{"connected": o.Connected, "live": o.Live, "liveMs": o.LiveMs,
+			"rec": o.Rec, "recPaused": o.RecPaused},
+		"twitch": map[string]interface{}{"configured": t.Configured, "connected": t.Connected, "live": t.Live,
+			"viewers": t.Viewers},
+		"discord": map[string]interface{}{"running": discordRunning()},
+	}
 }
 
 func runButton(i int) (string, error) {
@@ -34,10 +49,10 @@ func runButton(i int) (string, error) {
 		if err := sendHotkey(b.Keys); err != nil {
 			return "", err
 		}
-		return b.Label, nil
+		return "Pressed " + prettyKeys(b.Keys), nil
 	case "media":
 		mediaControl(b.Action)
-		return b.Label, nil
+		return "Media key: " + b.Label, nil
 	case "volume":
 		if !volumeKey(b.Action) {
 			return "", errors.New("volume action must be up, down or mute")
@@ -66,19 +81,24 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 	p := r.Form.Get
 	var msg string
 	var err error
+	what := ""
+	defer func() { logAction(what, msg, err) }()
 	switch p("kind") {
 	case "button":
 		i, convErr := strconv.Atoi(p("i"))
 		if convErr != nil {
 			err = errors.New("bad button number")
 		} else {
+			what = buttonName(i)
 			msg, err = runButton(i)
 		}
 	case "scene":
+		what = "Scene " + p("name")
 		err = obsSetScene(p("name"))
-		msg = p("name")
+		msg = "OBS switched to " + p("name")
 	case "sound":
 		name := p("name")
+		what = "Sound " + strings.TrimSuffix(name, filepath.Ext(name))
 		if !isKnownSound(name) {
 			err = errors.New("unknown sound")
 		} else {
@@ -86,6 +106,7 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 			msg = "▶ " + strings.TrimSuffix(name, filepath.Ext(name))
 		}
 	case "stopsound":
+		what = "Stop sound"
 		stopSound()
 		msg = "Stopped"
 	default:
@@ -144,4 +165,42 @@ func parseHotkey(keys string) (mods []uint16, key uint16, err error) {
 		return nil, 0, errors.New("hotkey needs a key: " + keys)
 	}
 	return mods, key, nil
+}
+
+func buttonName(i int) string {
+	c := currentConfig()
+	if i < 0 || i >= len(c.Buttons) {
+		return fmt.Sprintf("Button %d", i)
+	}
+	b := c.Buttons[i]
+	if b.Sub != "" {
+		return b.Label + " " + b.Sub
+	}
+	return b.Label
+}
+
+// logAction prints every tap from the phone and what the PC did with it, in the Thirai window.
+func logAction(what, msg string, err error) {
+	if what == "" {
+		return
+	}
+	result := msg
+	if err != nil {
+		result = "failed: " + err.Error()
+	}
+	fmt.Printf("%s  %-20s -> %s\n", time.Now().Format("15:04:05"), what, result)
+}
+
+// prettyKeys turns "ctrl+shift+alt+m" into "Ctrl+Shift+Alt+M".
+func prettyKeys(keys string) string {
+	parts := strings.Split(keys, "+")
+	for i, k := range parts {
+		k = strings.TrimSpace(k)
+		if len(k) <= 3 && k != "ctrl" && k != "alt" && k != "win" {
+			parts[i] = strings.ToUpper(k)
+		} else if k != "" {
+			parts[i] = strings.ToUpper(k[:1]) + k[1:]
+		}
+	}
+	return strings.Join(parts, "+")
 }

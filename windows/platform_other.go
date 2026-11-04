@@ -91,3 +91,5 @@ func typeText(s string)     { fmt.Printf("type %q\n", s) }
 func shellOpenURL(u string) { fmt.Println("open", u) }
 func playSound(path string) { fmt.Println("play", path) }
 func stopSound()            { fmt.Println("stop sound") }
+
+func discordRunning() bool { return true }
