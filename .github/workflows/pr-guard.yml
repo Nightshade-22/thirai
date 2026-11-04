@@ -1,0 +1,51 @@
+# Fork check: outside contributors must open pull requests from their own fork.
+#
+# Safety: pull_request_target runs with this repo's permissions, so this workflow never checks out
+# or runs any code from the pull request. It only reads the PR's metadata from the event.
+name: PR guard
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  fork-check:
+    name: Fork check
+    runs-on: ubuntu-latest
+    steps:
+      - name: The pull request comes from a fork and targets main
+        env:
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          THIS_REPO: ${{ github.repository }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          echo "PR from $HEAD_REPO by $AUTHOR into $BASE_REF"
+          if [ "$BASE_REF" != "main" ]; then
+            echo "::error::Pull requests go into main. Change the base branch to main."
+            exit 1
+          fi
+          if [ "$HEAD_REPO" = "$THIS_REPO" ] && [ "$AUTHOR" != "$OWNER" ]; then
+            echo "::error::This pull request comes from a branch inside $THIS_REPO. Fork the repo, push your branch to your fork, and open the pull request from there."
+            exit 1
+          fi
+          if [ -z "$HEAD_REPO" ]; then
+            echo "::error::The fork behind this pull request was deleted. Open a new pull request from a fork."
+            exit 1
+          fi
+          echo "OK: from a fork (or from the owner)."
+
+      - name: Label pull requests from forks
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          gh label create "from fork" --repo "$GITHUB_REPOSITORY" --color 5319e7 --description "Opened from a contributor's fork" 2>/dev/null || true
+          gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --add-label "from fork"

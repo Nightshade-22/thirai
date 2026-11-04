@@ -1,0 +1,55 @@
+# AI review: Claude reads every pull request and posts one review comment (it suggests, it never merges).
+#
+# Safety: pull_request_target runs with this repo's secrets, so this workflow checks out ONLY the main
+# branch (for the reviewer script and its rules) and never checks out, builds or runs the PR's code.
+# The PR is read through the GitHub API as text. The reviewer can only write one comment and add
+# labels from a fixed list. It never approves, merges or closes anything.
+#
+# Setup: add a repository secret named ANTHROPIC_API_KEY (Settings > Secrets and variables > Actions).
+# Without it the workflow skips with a notice.
+name: AI review
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: AI review
+    if: >-
+      (github.event_name == 'pull_request_target' && !github.event.pull_request.draft) ||
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request &&
+       startsWith(github.event.comment.body, '/review') &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out main only (never the PR)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Review
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+          REVIEW_MODEL: claude-sonnet-5-5
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::notice::ANTHROPIC_API_KEY is not set, so the AI review is skipped."
+            exit 0
+          fi
+          python3 .github/scripts/ai_review.py
