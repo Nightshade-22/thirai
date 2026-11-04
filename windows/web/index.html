@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- Thirai: a touch control panel for a phone or tablet in landscape.
      Must run in iOS 8/9 Safari (iPhone 4S): ES5 syntax only, no fetch, no flex gap, no Intl.
-     Modern iPhones additionally get a Phone tab (camera + mic to the Mac) and voice input for Ask Claude. -->
+     Modern iPhones additionally get a Phone tab (camera + mic to the Mac) and voice input for Take note. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -296,14 +296,14 @@
     <div id="right"><span id="badges"></span><span id="link"></span><span id="macName">Mac</span><span id="phoneBatt" style="display:none"><span class="batt"><i id="phoneBattFill"></i></span></span></div>
   </div>
 
-  <!-- Ask Claude -->
+  <!-- Take note -->
   <div id="claude" class="scrim">
     <div class="sheet">
-      <h2 id="askTitle"><span class="dot"></span>Take a note <small>· starts a new Claude chat</small></h2>
+      <h2 id="askTitle"><span class="dot"></span>Take a note <small>· saved to your notes on the Mac</small></h2>
       <textarea id="askText" placeholder="Tap 🎤 on the keyboard and speak…"></textarea>
       <div class="btns">
         <div id="askMic"><svg width="14" height="18" viewBox="0 0 14 18"><rect x="4" y="0" width="6" height="11" rx="3" fill="#fff"/><path d="M1 8a6 6 0 0 0 12 0M7 14v3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></div>
-        <div class="btn primary" id="askSend">Start chat</div>
+        <div class="btn primary" id="askSend">Save note</div>
         <div class="btn" id="askCancel">Cancel</div>
       </div>
     </div>
@@ -537,7 +537,7 @@
 
   // ---------- keys ----------
   var launcher = { selected: null, all: [] };
-  // A notepad with a pencil: quick capture. On a PC it goes to the notes file; on a Mac, a Claude chat.
+  // A notepad with a pencil: quick capture into a notes file on the computer.
   var CLAUDE_SVG = '<svg width="36" height="36" viewBox="0 0 36 36">' +
     '<rect x="7" y="5" width="19" height="26" rx="4.5" fill="#fff"/>' +
     '<path d="M11.5 13h10M11.5 18h10M11.5 23h6" stroke="#c55e39" stroke-width="2.2" stroke-linecap="round"/>' +
@@ -581,13 +581,9 @@
       })(apps[i]);
     }
     box.appendChild(key('claude', 'Take note', CLAUDE_SVG, openClaude, function () {
-      if (HOST === 'PC') {
-        xhr('POST', url('/note'), 'text=', function (s) {
-          toast(s === 200 ? 'Notes are open in Notepad on the PC' : 'Could not open the notes');
-        });
-        return;
-      }
-      xhr('POST', url('/claude'), 'text=', function () { toast('Claude is open on the ' + HOST); });
+      xhr('POST', url('/note'), 'text=', function (s) {
+        toast(s === 200 ? 'Notes are open in ' + notesApp() + ' on the ' + HOST : 'Could not open the notes');
+      });
     }));
   }
 
@@ -636,7 +632,7 @@
     });
   });
 
-  // ---------- Ask Claude ----------
+  // ---------- Take note ----------
   // Modern iPhone over HTTPS: Safari's speech recognition starts listening right away.
   // Otherwise (the 4S): focus the field so the keyboard's 🎤 dictation key is one tap away.
   var ask = $('askText');
@@ -672,25 +668,16 @@
   function sendAsk() {
     var text = ask.value.replace(/^\s+|\s+$/g, '');
     if (!text) { if (!canListen) ask.focus(); return toast('Say or type something first'); }
-    if (HOST === 'PC') {
-      // Saved to "Thirai notes.txt" on the PC with the time and, when live, the stream timestamp.
-      xhr('POST', url('/note'), 'text=' + encodeURIComponent(text), function (s) {
-        if (s !== 200) return toast('Could not save the note on the PC');
-        ask.value = ''; ask.blur(); sheet('claude', false);
-        toast('Note saved. Hold Take note to open your notes');
-      });
-      return;
-    }
-    // Mac: the note opens and starts a fresh conversation in Claude.
-    xhr('POST', url('/claude'), 'text=' + encodeURIComponent('Note: ' + text) + '&send=1', function (s) {
-      if (s !== 200) return toast('Could not reach the ' + HOST);
+    // Saved to "Thirai notes.txt" with the time and, on Windows while live, the stream timestamp.
+    xhr('POST', url('/note'), 'text=' + encodeURIComponent(text), function (s) {
+      if (s !== 200) return toast('Could not save the note on the ' + HOST);
       ask.value = ''; ask.blur(); sheet('claude', false);
-      toast('Note sent: new Claude chat started');
+      toast('Note saved. Hold Take note to open your notes');
     });
   }
-  function noteCopyForPC() {
-    $('askTitle').innerHTML = '<span class="dot"></span>Take a note <small>· saved to your notes on the PC</small>';
-    $('askSend').textContent = 'Save note';
+  function notesApp() { return HOST === 'PC' ? 'Notepad' : 'TextEdit'; }
+  function noteCopy() {
+    $('askTitle').innerHTML = '<span class="dot"></span>Take a note <small>· saved to your notes on the ' + HOST + '</small>';
   }
   tap($('askMic'), listen);
   tap($('askCancel'), function () { if (rec) rec.abort(); ask.blur(); sheet('claude', false); });
@@ -1248,7 +1235,7 @@
       sheet('login', false);
       var info = {};
       try { info = JSON.parse(text) || {}; } catch (e) {}
-      if (info.os === 'windows') { HOST = 'PC'; noteCopyForPC(); }
+      if (info.os === 'windows') { HOST = 'PC'; noteCopy(); }
       // Show the computer's name straight away, even when the deck opens on a page other than Deck.
       if (info.name) $('macName').textContent = String(info.name).replace(/^\S+['’]s?\s+/, '');
       // No HTTPS on this server, or an Android phone on plain http (the camera setup is iPhone-only).

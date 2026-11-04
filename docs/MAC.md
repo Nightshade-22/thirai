@@ -31,7 +31,6 @@ Tips for a dedicated desk display: set **Auto-Lock → Never**, and use **Guided
 
 | Permission | Why |
 |---|---|
-| **Accessibility** | Take note presses Return in Claude to send your note |
 | **Automation → Spotify / Music** | Reading what's playing and controlling playback |
 
 They're granted to the app you run `thirai` from (e.g. Terminal).
@@ -63,7 +62,7 @@ iPhone (Safari)                     Mac: thirai (Swift, no dependencies)
 | Feature | Mac side |
 |---|---|
 | App keys | `NSWorkspace` lists `/Applications`, renders icons, opens apps |
-| Take note | Opens `claude://claude.ai/new?q=…` (the same link the Claude app's own macOS Service uses), then presses Return |
+| Take note | Adds the note to `~/Documents/Thirai notes.txt` (or `~/.thirai/notes.txt` if Documents is blocked) with the time; holding the key opens it in TextEdit |
 | Now playing | AppleScript to Spotify / Music, with a timeout so a pending permission prompt can't freeze it |
 | Internet | `/usr/bin/networkQuality -c` + `en*` interface byte counters |
 | Batteries | IOKit power sources, `ioreg -r -k BatteryPercent`, `system_profiler SPBluetoothDataType` |
@@ -93,5 +92,5 @@ Settings live in `~/.thirai/`: `token` (the access code), `launcher.json` (your 
 | Phone shows a blank page | Is the Mac on the same Wi-Fi? Check the printed IP. Old iOS can't run modern JavaScript, so if you edited `index.html`, keep it ES5. |
 | "This Connection Is Not Private" | Finish step 3 of the HTTPS setup (Certificate Trust Settings). |
 | Now playing stays empty | Approve macOS's "allow to control Spotify / Music" prompt, then wait a few seconds. |
-| Take note opens Claude but doesn't send | Grant Accessibility to the app running `thirai`. |
+| Take note says it couldn't save | macOS may ask whether Terminal can use your Documents folder. Allow it, or the note goes to `~/.thirai/notes.txt` instead. |
 | Mic says "No audio device matching BlackHole" | Install BlackHole 2ch, or ignore it if you don't use the mic. |

@@ -35,7 +35,7 @@ Windows Defender SmartScreen may warn about an unsigned app the first time. Clic
 | Internet speed | `networkQuality` | Cloudflare's public speed test endpoints (about 15 seconds) |
 | Traffic graph | `en*` interface counters | Busiest connected Ethernet or Wi-Fi adapter |
 | Batteries | IOKit, ioreg, system_profiler | Laptop battery, plus Bluetooth devices that report a level to Windows |
-| Take note | Opens a new Claude chat with the note | Adds the note to `Documents\Thirai notes.txt` with the time and the stream or recording timestamp; holding the key opens the file in Notepad |
+| Take note | Adds the note to `~/Documents/Thirai notes.txt` with the time; holding the key opens it in TextEdit | Adds the note to `Documents\Thirai notes.txt` with the time and the stream or recording timestamp; holding the key opens the file in Notepad |
 
 Options: `--port 8045`, `--usb` (wired mode, below), `--bind <ip>` (listen on one address only).
 
@@ -184,8 +184,8 @@ These come from a review of the original OldPhoneDeck code that Thirai grew from
 Points worth knowing, and what the Windows server does about them:
 
 1. Traffic is plain HTTP, so the token travels in the clear on your Wi-Fi. Anyone who can sniff that network can lift it. Fine at home, not on office or café Wi-Fi. Wired mode (above) removes this for Android. With the Stream page, a lifted token can also end your stream or type in your chat, which is one more reason to use wired mode.
-2. On Windows, Take note only appends text to a notes file and opens it in Notepad (or the `notes_app` you set in config.json), with notes capped at 4,000 characters. Anyone with the token can add lines to that file, nothing more. On a Mac, Take note still sends text to the Claude desktop app and presses Return, so there the token also lets someone start Claude chats on your computer.
-3. On Mac, the Accessibility permission goes to Terminal (or whatever runs the server), so every script you run from Terminal gets it as well. Windows needs no such permission.
+2. On Windows, Take note only appends text to a notes file and opens it in Notepad (or the `notes_app` you set in config.json), with notes capped at 4,000 characters. Anyone with the token can add lines to that file, nothing more. The Mac server does the same with TextEdit.
+3. Neither server needs the Accessibility permission any more. On a Mac, Automation access to Spotify or Music goes to Terminal (or whatever runs the server).
 4. The Mac server reads request bodies up to 512 MB before checking the token, so anyone on the network can make it buffer a lot of memory. The Windows server checks the token first and caps bodies at 64 KB.
 5. The optional HTTPS setup installs a home-made root CA on the iPhone. Its private key sits unencrypted in `~/.thirai/tls/ca.key` on the Mac and the CA has no name constraints, so anyone who copies that key can intercept the phone's traffic to any site. Skip that setup unless you need the camera or mic, and delete the profile from the phone if you stop using it.
 6. The Mac's token compare isn't constant-time. Minor on a LAN. The Windows server uses a constant-time compare and a longer token (16 characters instead of 12).
@@ -196,4 +196,4 @@ To issue a new token on either system, delete `.thirai/token` in your home folde
 
 ## Testing status
 
-The Windows server compiles and its HTTP side was tested against the phone page in emulated Android and iPhone browsers. The Windows-only parts (Start menu apps, icons, media controls, Bluetooth batteries, the Claude deep link) follow documented APIs but haven't run on a real Windows PC yet. If one fails, the deck shows that widget empty and the rest keeps working. USB mode was tested with a stand-in for adb, and OBS control against a stand-in OBS WebSocket server with real password login, not with OBS itself.
+The Windows server compiles and its HTTP side was tested against the phone page in emulated Android and iPhone browsers. The Windows-only parts (Start menu apps, icons, media controls, Bluetooth batteries, opening Notepad) follow documented APIs but haven't run on a real Windows PC yet. If one fails, the deck shows that widget empty and the rest keeps working. USB mode was tested with a stand-in for adb, and OBS control against a stand-in OBS WebSocket server with real password login, not with OBS itself.
