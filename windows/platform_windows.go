@@ -492,12 +492,21 @@ var (
 	soundLoopStarted  sync.Once
 )
 
+// Key events carry the hardware scan code as well as the virtual key, because apps with
+// global shortcuts (Discord, OBS hotkeys, games) often match on scan codes.
+var procMapVirtualKey = user32.NewProc("MapVirtualKeyW")
+
+func scanCode(vk uint16) uintptr {
+	sc, _, _ := procMapVirtualKey.Call(uintptr(vk), 0) // MAPVK_VK_TO_VSC
+	return sc
+}
+
 func keyDown(vk uint16, ext bool) {
 	var f uintptr
 	if ext {
 		f = 0x1
 	}
-	procKeybdEvent.Call(uintptr(vk), 0, f, 0)
+	procKeybdEvent.Call(uintptr(vk), scanCode(vk), f, 0)
 }
 
 func keyUp(vk uint16, ext bool) {
@@ -505,7 +514,7 @@ func keyUp(vk uint16, ext bool) {
 	if ext {
 		f |= 0x1
 	}
-	procKeybdEvent.Call(uintptr(vk), 0, f, 0)
+	procKeybdEvent.Call(uintptr(vk), scanCode(vk), f, 0)
 }
 
 func isExtendedKey(vk uint16) bool {
@@ -522,15 +531,19 @@ func sendHotkey(keys string) error {
 	if err != nil {
 		return err
 	}
+	// Human-like timing: some shortcut listeners miss a combination sent all at once.
 	for _, m := range mods {
 		keyDown(m, m == 0x5B)
+		time.Sleep(20 * time.Millisecond)
 	}
 	keyDown(key, isExtendedKey(key))
-	time.Sleep(30 * time.Millisecond)
+	time.Sleep(60 * time.Millisecond)
 	keyUp(key, isExtendedKey(key))
 	for i := len(mods) - 1; i >= 0; i-- {
+		time.Sleep(20 * time.Millisecond)
 		keyUp(mods[i], mods[i] == 0x5B)
 	}
+	fmt.Println("Hotkey sent:", keys)
 	return nil
 }
 
