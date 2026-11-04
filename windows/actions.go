@@ -93,15 +93,24 @@ func handleAction(w http.ResponseWriter, r *http.Request) {
 			msg, err = runButton(i)
 		}
 	case "scene":
-		what = "Scene " + p("name")
-		err = obsSetScene(p("name"))
-		msg = "OBS switched to " + p("name")
+		name := p("name")
+		if !isKnownScene(name) {
+			what, err = "Scene", errors.New("not one of your OBS scenes")
+			if len(obsSnapshot().Scenes) == 0 {
+				err = errors.New("OBS is not connected")
+			}
+			break
+		}
+		what = "Scene " + name
+		err = obsSetScene(name)
+		msg = "OBS switched to " + name
 	case "sound":
 		name := p("name")
-		what = "Sound " + strings.TrimSuffix(name, filepath.Ext(name))
+		what = "Sound"
 		if !isKnownSound(name) {
 			err = errors.New("unknown sound")
 		} else {
+			what = "Sound " + strings.TrimSuffix(name, filepath.Ext(name))
 			playSound(filepath.Join(soundsDir(), name))
 			msg = "▶ " + strings.TrimSuffix(name, filepath.Ext(name))
 		}
@@ -177,6 +186,16 @@ func buttonName(i int) string {
 		return b.Label + " " + b.Sub
 	}
 	return b.Label
+}
+
+// isKnownScene accepts only scene names OBS itself reported, so the phone can't send arbitrary text.
+func isKnownScene(name string) bool {
+	for _, s := range obsSnapshot().Scenes {
+		if s == name {
+			return true
+		}
+	}
+	return false
 }
 
 // logAction prints every tap from the phone and what the PC did with it, in the Thirai window.

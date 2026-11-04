@@ -24,7 +24,8 @@ var webFS embed.FS
 
 var (
 	port      = flag.Int("port", 8045, "HTTP port")
-	usbMode   = flag.Bool("usb", false, "Android over a USB cable (adb): listen on this PC only, never on Wi-Fi")
+	usbMode   = flag.Bool("usb", false, "USB mode (the default): Android over a USB cable through adb, never on Wi-Fi")
+	wifiMode  = flag.Bool("wifi", false, "also listen on Wi-Fi so a phone or tablet can connect without a cable (same as \"wifi\": true in config.json)")
 	bindAddr  = flag.String("bind", "", "listen on this one IP address only (for example a USB tether adapter)")
 	configDir string
 	token     string
@@ -299,13 +300,15 @@ func main() {
 	startOBS()
 	startTwitch()
 
-	// USB mode listens on this PC only; the phone reaches it through adb's reverse tunnel.
-	addr := fmt.Sprintf(":%d", *port)
+	// USB mode is the default: Thirai listens on this PC only and the phone reaches it through
+	// adb's reverse tunnel. Wi-Fi is opt-in with --wifi, "wifi": true in config.json, or --bind.
+	network := (*wifiMode || currentConfig().Wifi || *bindAddr != "") && !*usbMode
+	addr := fmt.Sprintf("127.0.0.1:%d", *port)
 	switch {
-	case *usbMode:
-		addr = fmt.Sprintf("127.0.0.1:%d", *port)
-	case *bindAddr != "":
+	case network && *bindAddr != "":
 		addr = net.JoinHostPort(*bindAddr, fmt.Sprint(*port))
+	case network:
+		addr = fmt.Sprintf(":%d", *port)
 	}
 	srv := &http.Server{
 		Addr:              addr,
@@ -320,7 +323,8 @@ func main() {
 		waitAndExit(1)
 	}
 
-	if *usbMode {
+	if !network {
+		link := fmt.Sprintf("http://localhost:%d/#k=%s", *port, token)
 		fmt.Printf(`
 Thirai is running on %s in USB mode. It is not reachable over Wi-Fi.
 
@@ -328,39 +332,56 @@ Thirai is running on %s in USB mode. It is not reachable over Wi-Fi.
   2. Plug the phone into this PC with a USB cable and tap Allow on the phone.
   3. The deck opens on the phone by itself. If it doesn't, open Chrome there and go to:
 
-        http://localhost:%d/#k=%s
+        %s
 
+     or scan this code with the phone once it's plugged in:
+
+%s
 The phone also stays awake while it's plugged in.
+No cable, or an iPhone or iPad? Start Thirai with start-wifi.bat instead, or set "wifi": true
+in config.json. The link is then sent over Wi-Fi without encryption, so use it on your home network only.
 Close this window (or press Ctrl+C) to stop.
 
-`, hostName(), *port, token)
+`, hostName(), link, qrText(link))
 		go usbLoop(*port, token)
 	} else {
 		ip := lanAddress()
 		if *bindAddr != "" {
 			ip = *bindAddr
 		}
+		link := fmt.Sprintf("http://%s:%d/#k=%s", ip, *port, token)
 		fmt.Printf(`
-Thirai is running on %s. On the phone (same Wi-Fi), open:
+Thirai is running on %s in Wi-Fi mode. On the phone (same Wi-Fi), scan this code or open the link:
 
-    http://%s:%d/#k=%s
+%s
+    %s
 
   iPhone:   open it in Safari, then Share > Add to Home Screen.
   Android:  open it in Chrome, then menu > Add to Home screen (or Install app).
   Then hold any key to choose your apps.
 
 If Windows Firewall asks, allow access on Private networks only.
-The link is the password: anyone on your Wi-Fi who has it can open apps on this PC.
-For a cable instead of Wi-Fi (Android), start with --usb.
+The link is the password: anyone on your Wi-Fi who has it can control this PC. It travels
+without encryption, so use Wi-Fi mode on your home network only, never on public Wi-Fi.
+For an Android phone, USB mode (start Thirai without --wifi) keeps everything off the network.
 Close this window (or press Ctrl+C) to stop.
 
-`, hostName(), ip, *port, token)
+`, hostName(), qrText(link), link)
 	}
 
 	if err := srv.Serve(ln); err != nil {
 		fmt.Println("Server stopped:", err)
 		waitAndExit(1)
 	}
+}
+
+// qrText is the pairing link as a QR code for the console, or nothing if it can't be drawn.
+func qrText(link string) string {
+	q, err := encodeQR(link)
+	if err != nil {
+		return ""
+	}
+	return q.terminal()
 }
 
 // waitAndExit keeps a double-clicked console window open long enough to read the error.

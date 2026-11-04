@@ -13,12 +13,15 @@ Tablets get their own layout: three rows of five or six app keys (14 or 17 apps 
 
 ## Windows quick start
 
-1. Download `thirai-windows-x64.exe` from the [latest release](https://github.com/Nightshade-22/thirai/releases/latest) to the PC. Use the `arm64` build on a Snapdragon laptop.
-2. Double-click it. A console window prints a link like `http://192.168.1.20:8045/#k=…`.
-3. When Windows Firewall asks, tick Private networks only and click Allow.
-4. On the phone, open the link (Safari on iPhone, Chrome on Android).
-5. Add it to the home screen. On iPhone use Share, then Add to Home Screen. On Android use the Chrome menu, then Add to Home screen or Install app.
-6. Hold any key to pick your apps (7 on a phone, 14 or 17 on a tablet).
+Thirai starts in **USB mode**: it listens on this PC only, and an Android phone reaches it over the cable. Nothing on your Wi-Fi can connect. **Wi-Fi mode** is opt-in, for iPhones, iPads and phones without a cable.
+
+1. Download `thirai-windows-x64.exe`, `start-usb.bat` and `start-wifi.bat` from the [latest release](https://github.com/Nightshade-22/thirai/releases/latest) into one folder. Use the `arm64` build on a Snapdragon laptop.
+2. Android over a cable: set up USB mode once (see [USB mode](#usb-mode-the-default-android)), then double-click the .exe. The deck opens on the phone by itself.
+3. iPhone, iPad, or no cable: double-click `start-wifi.bat`. When Windows Firewall asks, tick Private networks only and click Allow. Scan the QR code in the window with the phone's camera, or open the link printed under it (Safari on iPhone, Chrome on Android).
+4. Add it to the home screen. On iPhone use Share, then Add to Home Screen. On Android use the Chrome menu, then Add to Home screen or Install app.
+5. Hold any key to pick your apps (7 on a phone, 14 or 17 on a tablet).
+
+To make Wi-Fi mode stick without the .bat file, add `"wifi": true` to `config.json` in your `.thirai` folder.
 
 The window has to stay open while you use the deck. To start it with Windows, press Win+R, type `shell:startup`, and put a shortcut to the .exe in that folder.
 
@@ -37,7 +40,7 @@ Windows Defender SmartScreen may warn about an unsigned app the first time. Clic
 | Batteries | IOKit, ioreg, system_profiler | Laptop battery, plus Bluetooth devices that report a level to Windows |
 | Take note | Adds the note to `~/Documents/Thirai notes.txt` with the time; holding the key opens it in TextEdit | Adds the note to `Documents\Thirai notes.txt` with the time and the stream or recording timestamp; holding the key opens the file in Notepad |
 
-Options: `--port 8045`, `--usb` (wired mode, below), `--bind <ip>` (listen on one address only).
+Options: `--port 8045`, `--wifi` (Wi-Fi mode, same as `"wifi": true` in config.json), `--usb` (force USB mode even if config.json turns Wi-Fi on) and `--bind <ip>` (Wi-Fi mode on one network address only).
 
 ## Stream page (Windows)
 
@@ -139,7 +142,7 @@ GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o dist/thirai-win
 
 On a Windows machine, plain `go build` works. On macOS or Linux, `go run .` starts a demo server with sample data, which is handy for working on the page. The page is embedded at build time from `windows/web/`, which is a copy of `Sources/thirai/web/`; copy it again after editing.
 
-## Wired mode (USB cable, Android)
+## USB mode (the default, Android)
 
 Wi-Fi mode sends the access link in plain HTTP, so anyone sniffing the network can copy it. USB mode avoids that: the phone talks to the computer through the cable and the server doesn't listen on Wi-Fi at all.
 
@@ -147,7 +150,7 @@ On Windows:
 
 1. Install Android platform-tools once: `winget install Google.PlatformTools`. You can also download the platform-tools zip from Google and put the `platform-tools` folder next to the .exe.
 2. On the phone, turn on Developer options (tap Build number seven times in About phone), then USB debugging.
-3. Double-click `start-usb.bat` (or run the .exe with `--usb`).
+3. Double-click the .exe (or `start-usb.bat`).
 4. Plug the phone in and tap Allow on the "Allow USB debugging?" prompt.
 
 The deck then opens on the phone by itself and reconnects whenever you plug it back in. While USB mode runs, it also sets the phone to stay awake while plugged into USB. To undo that, run `adb shell svc power stayon false`.
@@ -183,7 +186,7 @@ These come from a review of the original OldPhoneDeck code that Thirai grew from
 
 Points worth knowing, and what the Windows server does about them:
 
-1. Traffic is plain HTTP, so the token travels in the clear on your Wi-Fi. Anyone who can sniff that network can lift it. Fine at home, not on office or café Wi-Fi. Wired mode (above) removes this for Android. With the Stream page, a lifted token can also end your stream or type in your chat, which is one more reason to use wired mode.
+1. Traffic is plain HTTP, so the token travels in the clear on your Wi-Fi. Anyone who can sniff that network can lift it. Fine at home, not on office or café Wi-Fi. That's why the Windows server starts in USB mode and Wi-Fi mode is opt-in. With the Stream page, a lifted token can also end your stream or type in your chat, so keep Wi-Fi mode for your home network.
 2. On Windows, Take note only appends text to a notes file and opens it in Notepad (or the `notes_app` you set in config.json), with notes capped at 4,000 characters. Anyone with the token can add lines to that file, nothing more. The Mac server does the same with TextEdit.
 3. Neither server needs the Accessibility permission any more. On a Mac, Automation access to Spotify or Music goes to Terminal (or whatever runs the server).
 4. The Mac server reads request bodies up to 512 MB before checking the token, so anyone on the network can make it buffer a lot of memory. The Windows server checks the token first and caps bodies at 64 KB.

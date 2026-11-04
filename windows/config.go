@@ -52,6 +52,7 @@ type Config struct {
 	OBS      OBSConfig    `json:"obs"`
 	Twitch   TwitchConfig `json:"twitch"`
 	NotesApp string       `json:"notes_app,omitempty"` // Take note opens notes in this app; empty means Notepad
+	Wifi     bool         `json:"wifi,omitempty"`      // listen on Wi-Fi too; off means USB only
 	Buttons  []Button     `json:"buttons"`
 }
 
