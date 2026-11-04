@@ -18,7 +18,7 @@
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden; color: #f5f5f7;
     background: radial-gradient(ellipse at 0% 0%, rgba(94,92,230,.20), rgba(0,0,0,0) 55%),
-                radial-gradient(ellipse at 100% 100%, rgba(217,119,87,.14), rgba(0,0,0,0) 55%), #050507;
+                radial-gradient(ellipse at 100% 100%, rgba(224,162,26,.10), rgba(0,0,0,0) 55%), #050507;
     font: 13px -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased;
     -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: rgba(0,0,0,0); }
   img { -webkit-user-drag: none; }
@@ -67,11 +67,11 @@
   .key .label { margin-top: 7px; font-size: 10px; font-weight: 500; color: #aeaeb2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .key.empty .cap { background: rgba(255,255,255,.03); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
   .key.empty .cap:after { content: "+"; position: absolute; left: 0; right: 0; top: 16px; font-size: 30px; font-weight: 200; color: #636366; }
-  .key.claude .cap { background: linear-gradient(180deg, #e8946f 0%, #c55e39 100%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.30), inset 0 -1px 0 rgba(0,0,0,.25), 0 3px 0 #6b2d16, 0 8px 18px rgba(217,119,87,.35); }
-  .key.claude.down .cap { box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 1px 0 #6b2d16, 0 2px 8px rgba(217,119,87,.3); }
-  .key.claude svg { position: absolute; left: 17px; top: 17px; }
-  .key.claude .label { color: #f2b49c; }
+  .key.notes .cap { background: linear-gradient(180deg, #ffd65c 0%, #e0a21a 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(0,0,0,.2), 0 3px 0 #6e4d06, 0 8px 18px rgba(224,162,26,.3); }
+  .key.notes.down .cap { box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 1px 0 #6e4d06, 0 2px 8px rgba(224,162,26,.3); }
+  .key.notes svg { position: absolute; left: 17px; top: 17px; }
+  .key.notes .label { color: #f5d27a; }
   #hint { position: absolute; top: 290px; font-size: 9.5px; color: #48484a; text-align: center; }
 
   /* ---- widgets ---- */
@@ -144,13 +144,13 @@
     background: #1c1c1e; box-shadow: inset 0 0 0 .5px rgba(255,255,255,.1), 0 20px 40px rgba(0,0,0,.6); }
   .sheet h2 { margin: 0 0 9px; font-size: 13px; font-weight: 600; }
   .sheet h2 small { font-size: 10.5px; font-weight: 500; color: #8e8e93; }
-  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 4px; background: #d97757; margin-right: 6px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 4px; background: #e0a21a; margin-right: 6px; }
   #askText { width: 100%; height: 56px; box-sizing: border-box; border: 0; border-radius: 11px; padding: 8px 10px; resize: none;
     background: #2c2c2e; color: #fff; font: 14px -apple-system, "Helvetica Neue", sans-serif; -webkit-user-select: text; outline: none; }
   .btns { margin-top: 9px; overflow: hidden; }
   .btn { float: right; margin-left: 8px; padding: 0 15px; height: 28px; line-height: 28px; border-radius: 14px; font-size: 12px; font-weight: 600;
     background: #3a3a3c; color: #fff; }
-  .btn.primary { background: #d97757; }
+  .btn.primary { background: #0a84ff; }
   .opt { float: left; font-size: 10.5px; color: #8e8e93; line-height: 28px; }
   .opt input { vertical-align: -2px; }
   #askMic { float: left; width: 28px; height: 28px; border-radius: 14px; background: #3a3a3c; margin-right: 8px; position: relative; display: none; }
@@ -297,7 +297,7 @@
   </div>
 
   <!-- Take note -->
-  <div id="claude" class="scrim">
+  <div id="notes" class="scrim">
     <div class="sheet">
       <h2 id="askTitle"><span class="dot"></span>Take a note <small>· saved to your notes on the Mac</small></h2>
       <textarea id="askText" placeholder="Tap 🎤 on the keyboard and speak…"></textarea>
@@ -520,7 +520,7 @@
   }
   buildTabs();
   function sheet(id, on) { $(id).className = 'scrim' + (on ? ' on' : ''); }
-  window.deckHome = function () { sheet('claude', false); sheet('edit', false); show('deck'); };
+  window.deckHome = function () { sheet('notes', false); sheet('edit', false); show('deck'); };
 
   // ---------- clock ----------
   var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -538,10 +538,10 @@
   // ---------- keys ----------
   var launcher = { selected: null, all: [] };
   // A notepad with a pencil: quick capture into a notes file on the computer.
-  var CLAUDE_SVG = '<svg width="36" height="36" viewBox="0 0 36 36">' +
+  var NOTE_SVG = '<svg width="36" height="36" viewBox="0 0 36 36">' +
     '<rect x="7" y="5" width="19" height="26" rx="4.5" fill="#fff"/>' +
-    '<path d="M11.5 13h10M11.5 18h10M11.5 23h6" stroke="#c55e39" stroke-width="2.2" stroke-linecap="round"/>' +
-    '<path d="M24 26.5l6.5-6.5 2.5 2.5-6.5 6.5-3.3.8z" fill="#fff" stroke="#c55e39" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+    '<path d="M11.5 13h10M11.5 18h10M11.5 23h6" stroke="#b47e0c" stroke-width="2.2" stroke-linecap="round"/>' +
+    '<path d="M24 26.5l6.5-6.5 2.5 2.5-6.5 6.5-3.3.8z" fill="#fff" stroke="#b47e0c" stroke-width="1.6" stroke-linejoin="round"/></svg>';
   function byPath(p) {
     for (var i = 0; i < launcher.all.length; i++) if (launcher.all[i].path === p) return launcher.all[i];
     return null;
@@ -580,7 +580,7 @@
         box.appendChild(k);
       })(apps[i]);
     }
-    box.appendChild(key('claude', 'Take note', CLAUDE_SVG, openClaude, function () {
+    box.appendChild(key('notes', 'Take note', NOTE_SVG, openNotes, function () {
       xhr('POST', url('/note'), 'text=', function (s) {
         toast(s === 200 ? 'Notes are open in ' + notesApp() + ' on the ' + HOST : 'Could not open the notes');
       });
@@ -661,8 +661,8 @@
     $('askMic').className = 'live';
     rec.start();
   }
-  function openClaude() {
-    sheet('claude', true);
+  function openNotes() {
+    sheet('notes', true);
     if (canListen) { ask.value = ''; listen(); } else ask.focus();   // both must happen inside the tap
   }
   function sendAsk() {
@@ -671,7 +671,7 @@
     // Saved to "Thirai notes.txt" with the time and, on Windows while live, the stream timestamp.
     xhr('POST', url('/note'), 'text=' + encodeURIComponent(text), function (s) {
       if (s !== 200) return toast('Could not save the note on the ' + HOST);
-      ask.value = ''; ask.blur(); sheet('claude', false);
+      ask.value = ''; ask.blur(); sheet('notes', false);
       toast('Note saved. Hold Take note to open your notes');
     });
   }
@@ -680,7 +680,7 @@
     $('askTitle').innerHTML = '<span class="dot"></span>Take a note <small>· saved to your notes on the ' + HOST + '</small>';
   }
   tap($('askMic'), listen);
-  tap($('askCancel'), function () { if (rec) rec.abort(); ask.blur(); sheet('claude', false); });
+  tap($('askCancel'), function () { if (rec) rec.abort(); ask.blur(); sheet('notes', false); });
   tap($('askSend'), sendAsk);
 
   // ---------- widgets ----------
