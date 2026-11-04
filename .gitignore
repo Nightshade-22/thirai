@@ -13,3 +13,7 @@ config.json
 # OS clutter
 .DS_Store
 Thumbs.db
+
+# Python cache
+__pycache__/
+*.pyc
