@@ -171,7 +171,7 @@
   .erow .up { position: absolute; right: 4px; top: 4px; width: 30px; height: 26px; line-height: 26px; text-align: center; color: #8e8e93; }
   .erow.full { opacity: .35; }
 
-  #toast { position: absolute; left: 50%; top: 38px; -webkit-transform: translateX(-50%); transform: translateX(-50%); z-index: 20;
+  #toast { position: absolute; left: 50%; bottom: 10px; box-shadow: 0 4px 16px rgba(0,0,0,.5); -webkit-transform: translateX(-50%); transform: translateX(-50%); z-index: 20;
     background: rgba(44,44,46,.95); padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 500; white-space: nowrap; display: none; }
   #login .sheet { top: 40px; text-align: center; }
   #code { width: 70%; height: 32px; border: 0; border-radius: 9px; background: #2c2c2e; color: #fff; text-align: center; font-size: 16px; }
@@ -181,6 +181,18 @@
   .c5 .key:nth-child(5n) { margin-right: 0; }
   .c6 .key:nth-child(6n) { margin-right: 0; }
   .c5 .key, .c6 .key { margin-bottom: 30px; }
+  /* OBS / Twitch / Discord status badges in the top bar */
+  #badges { display: inline-block; margin-right: 8px; vertical-align: 1px; }
+  .bdg { display: inline-block; height: 15px; line-height: 15px; padding: 0 5px; margin-left: 4px; border-radius: 4px;
+    font-size: 8.5px; font-weight: 700; letter-spacing: .4px; color: #c7c7cc; background: rgba(118,118,128,.28);
+    -webkit-font-feature-settings: "tnum"; font-feature-settings: "tnum"; }
+  .bdg i { display: inline-block; width: 5px; height: 5px; border-radius: 3px; margin-right: 4px; vertical-align: 1px; background: currentColor; }
+  .bdg.off { color: #636366; background: rgba(118,118,128,.12); text-decoration: line-through; }
+  .bdg.live { background: #ff3b30; color: #fff; }
+  .bdg.rec { background: #ff9f0a; color: #1c1c1e; }
+  .bdg.tw { background: rgba(145,70,255,.28); color: #d6c2ff; }
+  .bdg.tw.live { background: #9146ff; color: #fff; }
+  .bdg.dc { background: rgba(88,101,242,.30); color: #c9cdfb; }
   #macName { display: inline-block; max-width: 96px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
 
   /* ---- Stream and Sounds pages ---- */
@@ -281,7 +293,7 @@
   <div id="status">
     <div id="clock"><span id="time">–</span><span id="ampm"></span><span id="date"></span></div>
     <div id="seg"><div data-view="deck" class="on">Deck</div><div data-view="phone">Phone</div></div>
-    <div id="right"><span id="link"></span><span id="macName">Mac</span><span id="phoneBatt" style="display:none"><span class="batt"><i id="phoneBattFill"></i></span></span></div>
+    <div id="right"><span id="badges"></span><span id="link"></span><span id="macName">Mac</span><span id="phoneBatt" style="display:none"><span class="batt"><i id="phoneBattFill"></i></span></span></div>
   </div>
 
   <!-- Ask Claude -->
@@ -744,6 +756,35 @@
       box.appendChild(c);
     });
   }
+  // Top bar: is OBS live, is Twitch live, is Discord running. Shown on every page.
+  function renderBadges(st, compact) {
+    var box = $('badges');
+    if (!st) { box.innerHTML = ''; $('macName').style.display = ''; return; }
+    var narrow = compact || W < 600, o = st.obs || {}, t = st.twitch || {}, d = st.discord || {};
+    box.innerHTML = '';
+    function badge(cls, text, dot) {
+      var b = document.createElement('span');
+      b.className = 'bdg ' + cls;
+      if (dot) b.appendChild(document.createElement('i'));
+      b.appendChild(document.createTextNode(text));
+      box.appendChild(b);
+    }
+    if (!o.connected) badge('off', 'OBS');
+    else if (o.live) badge('live', narrow ? 'OBS' : 'OBS ' + dur(o.liveMs), true);
+    else if (o.rec) badge('rec', 'OBS', true);
+    else badge('', 'OBS');
+    if (t.configured) {
+      if (!t.connected) badge('tw off', narrow ? 'TW' : 'TWITCH');
+      else if (t.live) badge('tw live', narrow ? 'TW' : 'TWITCH ' + fmtNum(t.viewers), true);
+      else badge('tw', narrow ? 'TW' : 'TWITCH');
+    }
+    badge(d.running ? 'dc' : 'off', narrow ? 'DC' : 'DISCORD');
+    // The badges take the room the computer's name used.
+    $('macName').style.display = 'none';
+    // Never run into the page tabs: use the short form when the full one doesn't fit.
+    var seg = $('seg'), right = $('right');
+    if (!narrow && seg.style.display !== 'none' && right.offsetLeft < seg.offsetLeft + seg.offsetWidth + 8) renderBadges(st, true);
+  }
   function pollStats() {
     if (view !== 'deck') return;
     xhr('GET', url('/stats'), null, function (s, text) {
@@ -751,6 +792,7 @@
       if (s !== 200) return;
       var d = JSON.parse(text);
       $('macName').textContent = d.mac.replace(/^\S+['’]s?\s+/, '');
+      renderBadges(d.status);
       var sp = d.speed || {};
       $('down').textContent = sp.down !== undefined ? fmt(sp.down) : '–';
       $('up').textContent = sp.up !== undefined ? fmt(sp.up) : '–';
@@ -1039,6 +1081,7 @@
       if (s !== 200) return;
       try { streamData = JSON.parse(text); } catch (e) { return; }
       streamAt = Date.now();
+      renderBadges(streamData.status);
       renderStream(); renderSounds();
     });
   }
@@ -1081,13 +1124,13 @@
     if (!o.connected) {
       piece('pill', 'OBS'); piece('err', o.error || 'Connecting to OBS…');
     } else {
-      piece('pill' + (o.live ? ' live' : ''), o.live ? 'LIVE ' + dur(o.liveMs) : 'OFFLINE');
-      if (o.rec) piece('pill ' + (o.recPaused ? 'warn' : 'live'), (o.recPaused ? 'PAUSED ' : 'REC ') + dur(o.recMs));
+      piece('pill' + (o.live ? ' live' : ''), o.live ? 'OBS LIVE ' + dur(o.liveMs) : 'OBS OFFLINE');
+      if (o.rec) piece('pill ' + (o.recPaused ? 'warn' : 'live'), (o.recPaused ? 'REC PAUSED ' : 'REC ') + dur(o.recMs));
       piece('', Math.round(o.fps) + ' fps · CPU ' + Math.round(o.cpu) + '%' + (o.live ? ' · ' + o.dropped.toFixed(1) + '% dropped' : ''));
     }
     if (tw.configured) {
       piece('gap', '');
-      piece('pill tw', 'TWITCH');
+      piece('pill tw', tw.connected ? (tw.live ? 'TWITCH LIVE' : 'TWITCH OFFLINE') : 'TWITCH');
       if (tw.connected) piece('', (tw.live ? fmtNum(tw.viewers) + ' watching · ' : '') + fmtNum(tw.followers) + ' followers');
       else if (tw.code) piece('err', 'Enter ' + tw.code + ' at twitch.tv/activate');
       else piece('err', tw.error || 'Tap a Twitch button to sign in');

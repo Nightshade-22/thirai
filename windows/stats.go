@@ -89,6 +89,7 @@ func statsSnapshot() map[string]interface{} {
 		"batteries": bats,
 		"mac":       hostName(), // the page reads this field for the computer's name
 		"music":     m,
+		"status":    deckStatus(),
 	}
 }
 
