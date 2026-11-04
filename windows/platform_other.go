@@ -19,6 +19,12 @@ var demoApps = []App{
 	{Name: "Spotify", Path: "SpotifyAB.SpotifyMusic_zpdnekdrzrea0!Spotify"},
 	{Name: "WhatsApp", Path: "5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App"},
 	{Name: "Word", Path: "Microsoft.Office.WINWORD.EXE.15"},
+	{Name: "Discord", Path: "com.squirrel.Discord.Discord"},
+	{Name: "Steam", Path: "Valve.Steam"},
+	{Name: "VS Code", Path: "Microsoft.VisualStudioCode"},
+	{Name: "Photos", Path: "Microsoft.Windows.Photos_8wekyb3d8bbwe!App"},
+	{Name: "Settings", Path: "windows.immersivecontrolpanel_cw5n1h2txyewy!microsoft.windows.immersivecontrolpanel"},
+	{Name: "Terminal", Path: "Microsoft.WindowsTerminal_8wekyb3d8bbwe!App"},
 }
 
 var demoPlaying = true
