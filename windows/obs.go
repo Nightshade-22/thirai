@@ -16,6 +16,8 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -203,7 +205,7 @@ func obsConnect(c OBSConfig) (*obsClient, error) {
 	ident := map[string]interface{}{"rpcVersion": 1, "eventSubscriptions": 0}
 	if a := hello.D.Authentication; a != nil {
 		if c.Password == "" {
-			return fail(errors.New("OBS asks for a password: add it to config.json"))
+			return fail(errors.New("OBS asks for a password: add it to config.json, or turn on authentication in OBS's WebSocket settings so Thirai can read it"))
 		}
 		ident["authentication"] = obsAuth(c.Password, a.Salt, a.Challenge)
 	}
@@ -334,7 +336,7 @@ func startOBS() {
 	go func() {
 		slow := 0
 		for {
-			c := currentConfig().OBS
+			c := withLocalOBS(currentConfig().OBS)
 			obsMu.Lock()
 			cl := obs
 			obsMu.Unlock()
@@ -369,8 +371,54 @@ func startOBS() {
 	}()
 }
 
+// obsLocal reads OBS's own WebSocket settings from this PC, so nobody has to copy the password.
+// OBS 28+ keeps them in <config>/obs-studio/plugin_config/obs-websocket/config.json.
+type obsLocal struct {
+	Found    bool
+	Enabled  bool   `json:"server_enabled"`
+	Port     int    `json:"server_port"`
+	Password string `json:"server_password"`
+	Auth     bool   `json:"auth_required"`
+}
+
+func readLocalOBS() obsLocal {
+	var l obsLocal
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return l
+	}
+	b, err := os.ReadFile(filepath.Join(dir, "obs-studio", "plugin_config", "obs-websocket", "config.json"))
+	if err != nil || json.Unmarshal(b, &l) != nil {
+		return obsLocal{}
+	}
+	l.Found = true
+	return l
+}
+
+// withLocalOBS fills in the password and port from OBS's settings when config.json leaves them
+// at their defaults and Thirai talks to OBS on this same PC.
+func withLocalOBS(c OBSConfig) OBSConfig {
+	if c.Host != "127.0.0.1" && c.Host != "localhost" {
+		return c
+	}
+	l := readLocalOBS()
+	if !l.Found {
+		return c
+	}
+	if c.Password == "" && l.Auth {
+		c.Password = l.Password
+	}
+	if c.Port == 4455 && l.Port > 0 {
+		c.Port = l.Port
+	}
+	return c
+}
+
 func obsHint(err error) string {
 	msg := err.Error()
+	if l := readLocalOBS(); l.Found && !l.Enabled {
+		return "Turn on OBS's WebSocket server: OBS > Tools > WebSocket Server Settings > Enable"
+	}
 	if strings.Contains(msg, "refused") && !strings.Contains(msg, "password") {
 		return "OBS isn't running, or its WebSocket server is off (OBS: Tools > WebSocket Server Settings)"
 	}

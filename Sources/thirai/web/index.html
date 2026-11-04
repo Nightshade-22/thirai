@@ -190,6 +190,8 @@
     -webkit-font-feature-settings: "tnum"; font-feature-settings: "tnum"; }
   .pill.live { background: #ff3b30; color: #fff; }
   .pill.warn { background: #ff9f0a; color: #1c1c1e; }
+  .pill.tw { background: #9146ff; color: #fff; }
+  #sBar .gap { display: inline-block; width: 10px; }
   #sBar .err { color: #ff9f0a; }
   .scene { position: absolute; border-radius: 10px; box-sizing: border-box; padding: 0 6px; text-align: center;
     background: rgba(118,118,128,.18); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
@@ -932,7 +934,15 @@
     chat: '<path d="M3 5.5A2.5 2.5 0 0 1 5.5 3h9A2.5 2.5 0 0 1 17 5.5v6a2.5 2.5 0 0 1-2.5 2.5H9l-4 3v-3h.5A2.5 2.5 0 0 1 3 11.5z"/>',
     link: '<path d="M8.5 11.5a3 3 0 0 0 4.2 0l2.6-2.6a3 3 0 0 0-4.2-4.2l-1 1M11.5 8.5a3 3 0 0 0-4.2 0l-2.6 2.6a3 3 0 0 0 4.2 4.2l1-1"/>',
     note: '<path d="M7.5 15V4.5l9-2V13"/><circle cx="5.5" cy="15" r="2"/><circle cx="14.5" cy="13" r="2"/>',
-    stop: '<rect x="5" y="5" width="10" height="10" rx="1.5" fill="currentColor"/>'
+    stop: '<rect x="5" y="5" width="10" height="10" rx="1.5" fill="currentColor"/>',
+    scissors: '<circle cx="5.5" cy="5.5" r="2.5"/><circle cx="5.5" cy="14.5" r="2.5"/><path d="M7.5 7l10 8.5M7.5 13l10-8.5"/>',
+    flag: '<path d="M4.5 17.5V3M4.5 3.5h10l-2 3.5 2 3.5h-10"/>',
+    megaphone: '<path d="M3 8v4h3l7 4V4L6 8z"/><path d="M6 12l1.2 4.5h2.3L8.5 12.6M16 8a3 3 0 0 1 0 4"/>',
+    smile: '<circle cx="10" cy="10" r="7.5"/><path d="M7 12a4 4 0 0 0 6 0M7.5 8h.01M12.5 8h.01"/>',
+    clock: '<circle cx="10" cy="10" r="7.5"/><path d="M10 5.5V10l3 2"/>',
+    heart: '<path d="M10 16.5s-6.5-4-6.5-8.5A3.5 3.5 0 0 1 10 6a3.5 3.5 0 0 1 6.5 2c0 4.5-6.5 8.5-6.5 8.5z"/>',
+    star: '<path d="M10 2.8l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7z"/>',
+    more: '<circle cx="5" cy="10" r="1.4" fill="currentColor"/><circle cx="10" cy="10" r="1.4" fill="currentColor"/><circle cx="15" cy="10" r="1.4" fill="currentColor"/>'
   };
   SICONS['vol-mute'] = SICONS['speaker-off'];
   function svgIcon(name) {
@@ -943,8 +953,11 @@
     'obs:stream': 'broadcast', 'obs:record': 'rec', 'obs:pause': 'pause', 'obs:replay': 'clip', 'obs:vcam': 'camera',
     'obs:studio': 'transition', 'obs:mic': 'mic', 'obs:desktop': 'speaker', 'media:playpause': 'playpause',
     'media:next': 'next', 'media:previous': 'prev', 'volume:up': 'vol-up', 'volume:down': 'vol-down',
-    'volume:mute': 'vol-mute', 'hotkey:': 'keyboard', 'text:': 'chat', 'url:': 'link', 'sound:': 'note'
+    'volume:mute': 'vol-mute', 'hotkey:': 'keyboard', 'text:': 'chat', 'url:': 'link', 'sound:': 'note',
+    'twitch:clip': 'scissors', 'twitch:marker': 'flag', 'twitch:ad': 'megaphone', 'twitch:chat': 'chat',
+    'twitch:emoteonly': 'smile', 'twitch:slow': 'clock', 'twitch:followers': 'heart', 'twitch:subonly': 'star'
   };
+  function fmtNum(n) { return String(n || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
   var streamData = null, streamAt = 0, streamSig = '', soundSig = '';
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
   function dur(ms) {
@@ -958,8 +971,10 @@
     });
   }
   // What a button looks like right now: { cls, icon, label, sub }.
-  function buttonState(b, o, elapsed) {
-    var st = { cls: b.color ? 'c-' + b.color : '', icon: b.icon || DEFAULT_ICON[b.type + ':' + (b.type === 'obs' || b.type === 'media' || b.type === 'volume' ? b.action : '')], label: b.label, sub: b.sub || '' };
+  function buttonState(b, o, elapsed, tw) {
+    var keyed = b.type === 'obs' || b.type === 'media' || b.type === 'volume' || b.type === 'twitch';
+    var st = { cls: b.color ? 'c-' + b.color : '', icon: b.icon || DEFAULT_ICON[b.type + ':' + (keyed ? b.action : '')], label: b.label, sub: b.sub || '' };
+    if (b.type === 'twitch') return twitchButton(b, st, tw || {});
     if (b.type !== 'obs') return st;
     if (!o.connected) { st.cls = 'off'; st.sub = 'OBS offline'; return st; }
     switch (b.action) {
@@ -983,6 +998,22 @@
         if (!a) { st.cls = 'dim'; st.sub = 'No source'; }
         else if (a.muted) { st.cls = 'muted'; st.icon = b.action === 'mic' ? 'mic-off' : 'speaker-off'; st.sub = 'Muted'; }
         else st.sub = 'Live';
+        break;
+    }
+    return st;
+  }
+  function twitchButton(b, st, tw) {
+    if (!st.cls) st.cls = 'c-purple';
+    if (!tw.configured) { st.cls = 'off'; st.sub = 'Set up Twitch'; return st; }
+    if (!tw.connected) { st.sub = tw.code || 'Tap to sign in'; return st; }
+    var on = { emoteonly: tw.emoteOnly, slow: tw.slow, followers: tw.followOnly, subonly: tw.subOnly }[b.action];
+    switch (b.action) {
+      case 'clip': case 'marker': case 'ad':
+        if (!tw.live) { st.cls += ' dim'; st.sub = 'Offline'; }
+        else if (b.action === 'ad') st.sub = (b.value || '60') + ' s';
+        break;
+      case 'emoteonly': case 'slow': case 'followers': case 'subonly':
+        if (on) { st.cls = 'on'; st.sub = 'On'; } else st.sub = st.sub || 'Off';
         break;
     }
     return st;
@@ -1035,24 +1066,36 @@
           : makeButton(press);
         grid.appendChild(el);
       });
+      grid.appendChild(moreButton(grid, layoutStream));
       layoutStream();
     }
     // Live state: status pills, current scene, button colours and timers.
-    var bar = $('sBar');
+    var bar = $('sBar'), tw = streamData.twitch || {};
+    bar.innerHTML = '';
+    function piece(cls, text) {
+      var sp = document.createElement('span');
+      if (cls) sp.className = cls;
+      sp.textContent = text;
+      bar.appendChild(sp);
+    }
     if (!o.connected) {
-      bar.innerHTML = '<span class="pill">OBS</span><span class="err"></span>';
-      bar.lastChild.textContent = o.error || 'Connecting to OBS…';
+      piece('pill', 'OBS'); piece('err', o.error || 'Connecting to OBS…');
     } else {
-      var live = '<span class="pill' + (o.live ? ' live' : '') + '">' + (o.live ? 'LIVE ' + dur(o.liveMs) : 'OFFLINE') + '</span>';
-      var rec = o.rec ? '<span class="pill ' + (o.recPaused ? 'warn' : 'live') + '">' + (o.recPaused ? 'PAUSED ' : 'REC ') + dur(o.recMs) + '</span>' : '';
-      bar.innerHTML = live + rec + '<span></span>';
-      bar.lastChild.textContent = Math.round(o.fps) + ' fps · CPU ' + Math.round(o.cpu) + '%' +
-        (o.live ? ' · ' + o.dropped.toFixed(1) + '% dropped' : '');
+      piece('pill' + (o.live ? ' live' : ''), o.live ? 'LIVE ' + dur(o.liveMs) : 'OFFLINE');
+      if (o.rec) piece('pill ' + (o.recPaused ? 'warn' : 'live'), (o.recPaused ? 'PAUSED ' : 'REC ') + dur(o.recMs));
+      piece('', Math.round(o.fps) + ' fps · CPU ' + Math.round(o.cpu) + '%' + (o.live ? ' · ' + o.dropped.toFixed(1) + '% dropped' : ''));
+    }
+    if (tw.configured) {
+      piece('gap', '');
+      piece('pill tw', 'TWITCH');
+      if (tw.connected) piece('', (tw.live ? fmtNum(tw.viewers) + ' watching · ' : '') + fmtNum(tw.followers) + ' followers');
+      else if (tw.code) piece('err', 'Enter ' + tw.code + ' at twitch.tv/activate');
+      else piece('err', tw.error || 'Tap a Twitch button to sign in');
     }
     var scenes = $('sScenes').children;
     for (var i = 0; i < scenes.length; i++) scenes[i].className = 'scene' + (scenes[i].sceneName === o.scene ? ' cur' : '');
     var els = $('sGrid').children;
-    for (var j = 0; j < els.length && j < buttons.length; j++) paintButton(els[j], buttonState(buttons[j], o, elapsed));
+    for (var j = 0; j < els.length && j < buttons.length; j++) paintButton(els[j], buttonState(buttons[j], o, elapsed, tw));
   }
   function layoutStream() {
     var sc = $('sScenes').children, els = $('sGrid').children, cw = W - 32, y = 52;
@@ -1067,22 +1110,45 @@
       sc[i].style.lineHeight = scH + 'px';
     }
     y += scRows * (scH + 8);
-    gridLayout(els, y, portrait ? 4 : tablet ? (W >= 820 ? 8 : 6) : 6);
+    gridLayout($('sGrid'), y, portrait ? 4 : tablet ? (W >= 820 ? 8 : 6) : 6);
   }
-  // Lays buttons out in `cols` columns between top y and the bottom of the stage; hides what can't fit.
-  function gridLayout(els, y, cols) {
-    var cw = W - 32, gap = 8, avail = H - 14 - y, n = els.length;
+  // The last key of a full grid: flips to the next page of buttons.
+  function moreButton(grid, relayout) {
+    var m = makeButton(function () { grid.page = (grid.page || 0) + 1; relayout(); });
+    m.isMore = true;
+    return m;
+  }
+  // Lays a grid's buttons out in `cols` columns between top y and the bottom of the stage.
+  // When they don't all fit, it shows them a page at a time with a More key in the last slot.
+  function gridLayout(grid, y, cols) {
+    var all = grid.children, items = [], more = null, i;
+    for (i = 0; i < all.length; i++) { if (all[i].isMore) more = all[i]; else items.push(all[i]); }
+    var n = items.length;
     if (!n) return;
-    var rows = Math.ceil(n / cols), maxH = tablet ? 96 : 78, minH = tablet ? 64 : 52;
-    var bh = Math.min(maxH, Math.floor((avail - (rows - 1) * gap) / rows));
-    if (bh < minH) { rows = Math.max(1, Math.floor((avail + gap) / (minH + gap))); bh = Math.floor((avail - (rows - 1) * gap) / rows); }
-    var bw = (cw - (cols - 1) * gap) / cols;
-    for (var i = 0; i < n; i++) {
-      var r = Math.floor(i / cols);
-      els[i].style.display = r < rows ? 'block' : 'none';
-      px(els[i], { left: 16 + (i % cols) * (bw + gap), top: y + r * (bh + gap), width: bw, height: bh });
-      els[i].style.paddingTop = Math.max(5, Math.round((bh - 46) / 2)) + 'px';
+    var cw = W - 32, gap = 8, avail = H - 14 - y, maxH = tablet ? 96 : 78, minH = tablet ? 64 : 52;
+    var maxRows = Math.max(1, Math.floor((avail + gap) / (minH + gap))), cap = maxRows * cols;
+    var shown = items, rows, pages = 1, page = 0;
+    if (n > cap && more) {
+      var per = cap - 1;
+      pages = Math.ceil(n / per);
+      page = (grid.page || 0) % pages;
+      grid.page = page;
+      shown = items.slice(page * per, page * per + per);
+      shown.push(more);
+      rows = maxRows;
+    } else {
+      grid.page = 0;
+      rows = Math.min(maxRows, Math.ceil(n / cols));
     }
+    var bh = Math.min(maxH, Math.floor((avail - (rows - 1) * gap) / rows)), bw = (cw - (cols - 1) * gap) / cols;
+    for (i = 0; i < all.length; i++) all[i].style.display = 'none';
+    for (i = 0; i < shown.length && i < rows * cols; i++) {
+      var el = shown[i];
+      el.style.display = 'block';
+      px(el, { left: 16 + (i % cols) * (bw + gap), top: y + Math.floor(i / cols) * (bh + gap), width: bw, height: bh });
+      el.style.paddingTop = Math.max(5, Math.round((bh - 46) / 2)) + 'px';
+    }
+    if (more && pages > 1) paintButton(more, { cls: '', icon: 'more', label: 'More', sub: (page + 1) + ' of ' + pages });
   }
   function renderSounds() {
     if (!streamData) return;
@@ -1104,11 +1170,12 @@
         icon: 'note', label: f.replace(/\.(mp3|wav)$/i, ''), sub: '' });
       grid.appendChild(el);
     });
+    if (list.length) grid.appendChild(moreButton(grid, layoutSounds));
     layoutSounds();
   }
   function layoutSounds() {
     px($('sndMsg'), { left: 40, top: H / 2 - 30, width: W - 80 });
-    gridLayout($('sndGrid').children, 56, portrait ? 3 : tablet ? (W >= 820 ? 8 : 6) : 5);
+    gridLayout($('sndGrid'), 56, portrait ? 3 : tablet ? (W >= 820 ? 8 : 6) : 5);
   }
 
   // ---------- boot ----------

@@ -14,9 +14,9 @@ func streamState() map[string]interface{} {
 	buttons := make([]map[string]string, len(c.Buttons))
 	for i, b := range c.Buttons {
 		// The phone only needs what to draw; keystrokes, text and links stay on the computer.
-		buttons[i] = map[string]string{"type": b.Type, "label": b.Label, "sub": b.Sub, "action": b.Action, "icon": b.Icon, "color": b.Color}
+		buttons[i] = map[string]string{"type": b.Type, "label": b.Label, "sub": b.Sub, "action": b.Action, "icon": b.Icon, "color": b.Color, "value": b.Value}
 	}
-	return map[string]interface{}{"obs": obsSnapshot(), "buttons": buttons, "sounds": listSounds()}
+	return map[string]interface{}{"obs": obsSnapshot(), "twitch": twitchSnapshot(), "buttons": buttons, "sounds": listSounds()}
 }
 
 func runButton(i int) (string, error) {
@@ -28,6 +28,8 @@ func runButton(i int) (string, error) {
 	switch b.Type {
 	case "obs":
 		return obsAction(b.Action)
+	case "twitch":
+		return twitchAction(b)
 	case "hotkey":
 		if err := sendHotkey(b.Keys); err != nil {
 			return "", err

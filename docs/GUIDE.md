@@ -62,11 +62,24 @@ The Stream page has three parts. The top line shows LIVE or OFFLINE with the str
 ### Connect OBS (once)
 
 1. In OBS 28 or newer, open Tools, then WebSocket Server Settings.
-2. Tick Enable WebSocket server. Leave the port at 4455 and keep authentication on.
-3. Click Show Connect Info and copy the server password.
-4. Open `%USERPROFILE%\.thirai\config.json` in Notepad, paste the password into `"password": ""`, save, and restart Thirai.
+2. Tick Enable WebSocket server. Leave authentication on and click OK.
 
-The top line of the Stream page says what's wrong if OBS isn't reachable, such as OBS not running or a wrong password.
+That's all. Thirai reads the port and password from OBS's own settings on the same PC, so there's nothing to copy. If OBS runs on another computer, put its address in `"host"` and the password from Show Connect Info in `"password"` in `config.json`.
+
+The top line of the Stream page says what's wrong when OBS isn't reachable: OBS not running, the WebSocket server switched off, or a wrong password.
+
+### Connect Twitch (once)
+
+Twitch needs you to register a small app of your own. It takes two minutes and is free.
+
+1. Turn on two-factor authentication on your Twitch account if it isn't on yet (Twitch requires it for developer apps).
+2. Go to dev.twitch.tv/console/apps and click Register Your Application.
+3. Fill in: any unique name (for example `Thirai-yourname`), OAuth Redirect URL `http://localhost`, Category `Broadcasting Suite`, Client Type `Public`. Click Create.
+4. Open the app with Manage and copy its Client ID.
+5. Paste it into `config.json` as `"twitch": { "client_id": "..." }` and restart Thirai.
+6. Tap any Twitch button on the phone. Twitch's activation page opens on the PC with a code filled in; click Authorize. The phone also shows the code, in case you'd rather enter it at twitch.tv/activate on another device.
+
+Thirai never sees your Twitch password. It keeps the sign-in in `twitch.json` in the `.thirai` folder (readable only by your Windows account) and renews it on its own. Delete that file to sign out.
 
 ### Discord mute and deafen (once)
 
@@ -91,10 +104,13 @@ Edit the `buttons` list in `config.json` and restart. Each button has a `type`, 
 | `text` | `text` to type | `{"type": "text", "text": "!socials", "label": "Socials"}` |
 | `url` | an `http` or `https` link | `{"type": "url", "url": "https://twitch.tv/yourname", "label": "Channel"}` |
 | `sound` | `file`, a file in the sounds folder | `{"type": "sound", "file": "airhorn.mp3", "label": "Airhorn"}` |
+| `twitch` | `action`: `clip`, `marker`, `ad` (seconds in `value`), `chat` (message in `text`), `emoteonly`, `slow` (seconds in `value`), `followers` or `subonly` | `{"type": "twitch", "action": "chat", "text": "!discord", "label": "Discord link"}` |
 
-Colours: `indigo`, `teal`, `red`, `purple`, `green`, `orange`, `blue`, `pink`, `yellow`. Icons: `broadcast`, `rec`, `pause`, `clip`, `camera`, `transition`, `mic`, `mic-off`, `speaker`, `speaker-off`, `headphones`, `keyboard`, `playpause`, `next`, `prev`, `vol-up`, `vol-down`, `vol-mute`, `chat`, `link`, `note`, `stop`.
+Twitch buttons are purple unless you give them a colour. Clip, marker and ad dim while you're offline; the chat-mode buttons turn green while the mode is on.
 
-A phone shows about 18 buttons (fewer if OBS has more than five scenes); a tablet shows more. The phone can only press buttons from this list, by number. It never sends its own keystrokes, text or links to the PC.
+Colours: `indigo`, `teal`, `red`, `purple`, `green`, `orange`, `blue`, `pink`, `yellow`. Icons: `broadcast`, `rec`, `pause`, `clip`, `camera`, `transition`, `mic`, `mic-off`, `speaker`, `speaker-off`, `headphones`, `keyboard`, `playpause`, `next`, `prev`, `vol-up`, `vol-down`, `vol-mute`, `chat`, `link`, `note`, `stop`, `scissors`, `flag`, `megaphone`, `smile`, `clock`, `heart`, `star`.
+
+When there are more buttons than fit, the last key becomes More and flips through pages. A phone fits 18 keys per page and a tablet 24. The phone can only press buttons from this list, by number. It never sends its own keystrokes, text or links to the PC.
 
 ## Sounds page (Windows)
 

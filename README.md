@@ -16,7 +16,7 @@ On a tablet you get more keys and bigger buttons:
 
 The Deck page has 7 app keys on a phone and 14 or 17 on a tablet, plus Take note, which turns a note into a new chat in the Claude desktop app. It also shows what's playing with track controls, your internet speed, and laptop and Bluetooth battery levels.
 
-The Stream page (Windows) has a button for each OBS scene and buttons to go live, record, pause, save a replay clip, switch the virtual camera, transition in studio mode, and mute the mic or desktop audio. Discord mute and deafen, media and volume keys, canned chat messages and links sit alongside. Going live needs a press and hold. The top line shows live and recording timers, frame rate, CPU and dropped frames, and every button is set in one config file.
+The Stream page (Windows) has a button for each OBS scene and buttons to go live, record, pause, save a replay clip, switch the virtual camera, transition in studio mode, and mute the mic or desktop audio. Twitch buttons create clips and stream markers, run ads, send chat messages and switch emote-only, slow, followers-only and sub-only modes, and the top line shows viewers and followers. Discord mute and deafen, media and volume keys and links sit alongside. Going live needs a press and hold. The top line shows live and recording timers, frame rate, CPU and dropped frames, and every button is set in one config file.
 
 The Sounds page (Windows) turns any `.mp3` or `.wav` in the sounds folder into a button. Sounds play through your speakers, so OBS picks them up.
 
@@ -29,7 +29,7 @@ An Android phone can also run over a USB cable, with the PC closed to Wi-Fi enti
 3. Open the link it prints on your phone, then add it to the home screen.
 4. Hold any key to pick your apps.
 
-To use a USB cable with an Android phone instead, run `start-usb.bat`. To connect OBS and Discord, follow the [guide](docs/GUIDE.md#connect-obs-once).
+To use a USB cable with an Android phone instead, run `start-usb.bat`. To connect OBS, Twitch and Discord, follow the [guide](docs/GUIDE.md#connect-obs-once).
 
 ## Quick start on a Mac
 
