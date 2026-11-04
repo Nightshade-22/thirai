@@ -24,7 +24,7 @@ An Android phone can also run over a USB cable, with the PC closed to Wi-Fi enti
 
 ## Quick start on Windows
 
-1. Download `windows/dist/thirai-windows-x64.exe` (`arm64` for Snapdragon laptops) and double-click it.
+1. Download `thirai-windows-x64.exe` from the [latest release](https://github.com/Nightshade-22/thirai/releases/latest) (`thirai-windows-arm64.exe` for Snapdragon laptops) and double-click it.
 2. Allow it on Private networks when Windows Firewall asks.
 3. Open the link it prints on your phone, then add it to the home screen.
 4. Hold any key to pick your apps.
@@ -34,7 +34,7 @@ To use a USB cable with an Android phone instead, run `start-usb.bat`. To connec
 ## Quick start on a Mac
 
 ```bash
-git clone https://github.com/<you>/thirai.git
+git clone https://github.com/Nightshade-22/thirai.git
 cd thirai
 swift build -c release
 .build/release/thirai

@@ -13,7 +13,7 @@ Tablets get their own layout: three rows of five or six app keys (14 or 17 apps 
 
 ## Windows quick start
 
-1. Copy `windows/dist/thirai-windows-x64.exe` to the PC. Use the `arm64` build on a Snapdragon laptop.
+1. Download `thirai-windows-x64.exe` from the [latest release](https://github.com/Nightshade-22/thirai/releases/latest) to the PC. Use the `arm64` build on a Snapdragon laptop.
 2. Double-click it. A console window prints a link like `http://192.168.1.20:8045/#k=…`.
 3. When Windows Firewall asks, tick Private networks only and click Allow.
 4. On the phone, open the link (Safari on iPhone, Chrome on Android).
