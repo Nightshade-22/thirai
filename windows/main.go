@@ -178,7 +178,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	switch {
 	case r.Method == "GET" && r.URL.Path == "/info":
-		writeJSON(w, map[string]interface{}{"camera": false, "os": "windows", "https": false, "stream": true})
+		writeJSON(w, map[string]interface{}{"camera": false, "os": "windows", "https": false, "stream": true, "name": hostName()})
 	case r.Method == "GET" && r.URL.Path == "/stream":
 		writeJSON(w, streamState())
 	case r.Method == "POST" && r.URL.Path == "/action":
