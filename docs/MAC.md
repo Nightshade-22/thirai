@@ -11,7 +11,7 @@ The Mac server is written in Swift and has no dependencies. It runs the Deck pag
 ## Quick start
 
 ```bash
-git clone https://github.com/<you>/thirai.git
+git clone https://github.com/Nightshade-22/thirai.git
 cd thirai
 swift build -c release
 .build/release/thirai

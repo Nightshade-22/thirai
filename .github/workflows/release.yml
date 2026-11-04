@@ -1,0 +1,44 @@
+# Release: push a tag like v0.1.0 and this builds the Windows server and publishes a GitHub release
+# with thirai-windows-x64.exe, thirai-windows-arm64.exe, start-usb.bat and SHA256SUMS.txt.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Build
+        working-directory: windows
+        run: |
+          mkdir -p ../out
+          GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o ../out/thirai-windows-x64.exe .
+          GOOS=windows GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o ../out/thirai-windows-arm64.exe .
+          cp dist/start-usb.bat ../out/
+          cd ../out && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          cat > notes.md <<'EOF'
+          Windows: download `thirai-windows-x64.exe` (or `thirai-windows-arm64.exe` on Snapdragon laptops) and double-click it. `start-usb.bat` runs it over a USB cable with an Android phone. Check downloads against `SHA256SUMS.txt`.
+
+          Mac: build from source, see [docs/MAC.md](https://github.com/Nightshade-22/thirai/blob/main/docs/MAC.md).
+
+          The .exe files are not code-signed, so Windows SmartScreen may warn the first time. Click More info, then Run anyway, or build it yourself from `windows/`.
+          EOF
+          gh release create "$TAG" out/* --repo "$GITHUB_REPOSITORY" --title "Thirai ${TAG#v}" --notes-file notes.md --verify-tag
