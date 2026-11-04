@@ -24,7 +24,16 @@ var demoApps = []App{
 var demoPlaying = true
 var demoStart = time.Now()
 
-func platformInit()                 { fmt.Println("(demo platform: not Windows)") }
+func platformInit() {
+	fmt.Println("(demo platform: not Windows)")
+	// The demo can't reach the speed-test site; show a typical home connection instead.
+	go func() {
+		time.Sleep(6 * time.Second)
+		statsMu.Lock()
+		speed = map[string]interface{}{"down": 312.4, "up": 48.6, "ping": 9.0, "at": float64(time.Now().UnixMilli())}
+		statsMu.Unlock()
+	}()
+}
 func hostName() string              { return "STUDIO-PC" }
 func listApps() []App               { return demoApps }
 func appIcon(string) []byte         { return nil }

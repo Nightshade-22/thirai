@@ -1187,6 +1187,8 @@
       var info = {};
       try { info = JSON.parse(text) || {}; } catch (e) {}
       if (info.os === 'windows') HOST = 'PC';
+      // Show the computer's name straight away, even when the deck opens on a page other than Deck.
+      if (info.name) $('macName').textContent = String(info.name).replace(/^\S+['’]s?\s+/, '');
       // No HTTPS on this server, or an Android phone on plain http (the camera setup is iPhone-only).
       if (info.https === false || (android && !window.isSecureContext)) phoneTab = false;
       tabs = ['deck'];
