@@ -14,7 +14,7 @@ On a tablet you get more keys and bigger buttons:
 
 ## What it does
 
-The Deck page has 7 app keys on a phone and 14 or 17 on a tablet, plus Take note: type or dictate a quick note and it's saved on the PC with the time and, when you're live, the stream timestamp. Hold the key to open your notes in Notepad. It also shows what's playing with track controls, your internet speed, and laptop and Bluetooth battery levels.
+The Deck page has 7 app keys on a phone and 14 or 17 on a tablet, plus Take note: type or dictate a quick note and it's saved to a notes file on your computer with the time and, on Windows while you're live, the stream timestamp. Hold the key to open your notes in Notepad (Windows) or TextEdit (Mac). It also shows what's playing with track controls, your internet speed, and laptop and Bluetooth battery levels.
 
 The Stream page (Windows) has a button for each OBS scene and buttons to go live, record, pause, save a replay clip, switch the virtual camera, transition in studio mode, and mute the mic or desktop audio. Twitch buttons create clips and stream markers, run ads, send chat messages and switch emote-only, slow, followers-only and sub-only modes, and the top line shows viewers and followers. Discord mute and deafen, media and volume keys and links sit alongside. Going live needs a press and hold. The top line shows live and recording timers, frame rate, CPU and dropped frames, and every button is set in one config file.
 

@@ -1,16 +1,5 @@
 import AppKit
 
-/// Synthetic key presses (used to press Return in Claude). Requires Accessibility permission.
-enum Input {
-    static func key(_ name: String) {
-        let codes: [String: CGKeyCode] = ["return": 36, "tab": 48, "space": 49, "delete": 51, "escape": 53]
-        guard let code = codes[name] else { return }
-        for down in [true, false] {
-            CGEvent(keyboardEventSource: nil, virtualKey: code, keyDown: down)?.post(tap: .cghidEventTap)
-        }
-    }
-}
-
 /// The app launcher: lists installed apps, renders their icons, and opens them.
 enum Apps {
     private static let lock = NSLock()
@@ -82,35 +71,51 @@ enum Launcher {
     }
 }
 
-/// Sends text to the Claude desktop app using the same deep link its own macOS
-/// Service uses: claude://claude.ai/new?q=<text>&surface=chat (found in app.asar).
-enum Claude {
-    static let bundleID = "com.anthropic.claudefordesktop"
+/// Take note: appends short notes to "Thirai notes.txt" in Documents (or ~/.thirai/notes.txt if
+/// Documents can't be written) and opens the file in TextEdit when the key is held.
+enum Notes {
+    static let header = "Thirai notes.\n\n"
+    private static let lock = NSLock()
 
-    static func ask(_ text: String, autoSend: Bool) {
-        var comps = URLComponents()
-        comps.scheme = "claude"
-        comps.host = "claude.ai"
-        comps.path = "/new"
-        comps.queryItems = [URLQueryItem(name: "q", value: text), URLQueryItem(name: "surface", value: "chat")]
-        // URLComponents leaves "+" and "&"-adjacent chars ambiguous for some parsers; encode strictly.
-        comps.percentEncodedQuery = comps.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
-        guard let url = comps.url else { return }
-        NSWorkspace.shared.open(url)
-        guard autoSend else { return }
-        // Press Return once the new chat has loaded — only if Claude is actually in front.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            guard NSWorkspace.shared.frontmostApplication?.bundleIdentifier == bundleID else {
-                print("Claude was not frontmost; left the message unsent")
-                return
-            }
-            Input.key("return")
-        }
+    private static var candidates: [URL] {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        return [home.appendingPathComponent("Documents/Thirai notes.txt"),
+                home.appendingPathComponent(".thirai/notes.txt")]
     }
 
-    static func focus() {
-        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
-            NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+    /// The first notes file that exists or can be created.
+    static func file() -> URL? {
+        for url in candidates {
+            if FileManager.default.fileExists(atPath: url.path) { return url }
+            try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            if FileManager.default.createFile(atPath: url.path, contents: Data(header.utf8),
+                                              attributes: [.posixPermissions: 0o600]) { return url }
         }
+        return nil
+    }
+
+    static func save(_ text: String) -> Bool {
+        let oneLine = text.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
+        let stamp = DateFormatter()
+        stamp.dateFormat = "yyyy-MM-dd HH:mm"
+        let line = stamp.string(from: Date()) + "  " + String(oneLine.prefix(4000)) + "\n"
+        lock.lock(); defer { lock.unlock() }
+        guard let url = file(), let handle = try? FileHandle(forWritingTo: url) else { return false }
+        defer { try? handle.close() }
+        do {
+            try handle.seekToEnd()
+            try handle.write(contentsOf: Data(line.utf8))
+            return true
+        } catch { return false }
+    }
+
+    static func open() -> Bool {
+        guard let url = file() else { return false }
+        if let editor = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.TextEdit") {
+            NSWorkspace.shared.open([url], withApplicationAt: editor, configuration: NSWorkspace.OpenConfiguration())
+        } else {
+            NSWorkspace.shared.open(url)
+        }
+        return true
     }
 }

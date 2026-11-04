@@ -65,3 +65,11 @@ jobs:
           name: thirai-windows
           path: windows/dist/*.exe
           retention-days: 14
+
+  mac:
+    name: Mac build
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the Mac server
+        run: swift build -c release
