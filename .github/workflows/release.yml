@@ -1,13 +1,19 @@
-# Release: push a tag like v0.1.0 and this builds the Windows server and publishes a GitHub release
-# with thirai-windows-x64.exe, thirai-windows-arm64.exe, start-usb.bat and SHA256SUMS.txt.
+# Release: publish a release on GitHub (Releases > Draft a new release, tag like v0.1.0), or push a v* tag.
+# This builds the Windows server and attaches thirai-windows-x64.exe, thirai-windows-arm64.exe,
+# start-usb.bat and SHA256SUMS.txt to that release, creating the release if it doesn't exist yet.
 name: Release
 
 on:
+  release:
+    types: [published]
   push:
     tags: ["v*"]
 
 permissions:
   contents: write
+
+concurrency:
+  group: release-${{ github.event.release.tag_name || github.ref_name }}
 
 jobs:
   release:
@@ -32,8 +38,12 @@ jobs:
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ github.event.release.tag_name || github.ref_name }}
         run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" out/* --repo "$GITHUB_REPOSITORY" --clobber
+            exit 0
+          fi
           cat > notes.md <<'EOF'
           Windows: download `thirai-windows-x64.exe` (or `thirai-windows-arm64.exe` on Snapdragon laptops) and double-click it. `start-usb.bat` runs it over a USB cable with an Android phone. Check downloads against `SHA256SUMS.txt`.
 
