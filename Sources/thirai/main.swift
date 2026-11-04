@@ -157,12 +157,17 @@ let routes: (HTTPRequest, HTTPConnection) -> Void = { req, conn in
         guard Apps.isKnown(path) else { return conn.respond(404, text: "unknown app") }
         DispatchQueue.main.async { Apps.launch(path) }
         conn.respond(text: "ok")
-    case ("POST", "/claude"):
+    case ("POST", "/note"), ("POST", "/claude"):   // /claude: pages cached before 0.1
         let text = (p["text"] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        DispatchQueue.main.async {
-            if text.isEmpty { Claude.focus() } else { Claude.ask(text, autoSend: p["send"] == "1") }
+        if text.isEmpty {
+            DispatchQueue.main.async { _ = Notes.open() }
+            conn.respond(text: "ok")
+        } else if Notes.save(text) {
+            print("Take note: saved (\(text.count) characters)")
+            conn.respond(text: "ok")
+        } else {
+            conn.respond(500, text: "could not save the note")
         }
-        conn.respond(text: "ok")
     case ("GET", "/camera.mjpg"):
         let id = ObjectIdentifier(conn)
         conn.onClose = { server.queue.async { cameraViewers[id] = nil } }
@@ -189,11 +194,7 @@ if let identity = LocalTLS.identity(for: lanIP) {
     } catch { print("⚠️  HTTPS failed to start: \(error)") }
 }
 
-// MARK: Permissions + start
-
-if !AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary) {
-    print("⚠️  Grant Accessibility permission (System Settings → Privacy & Security → Accessibility) so Take note can press Return in Claude.")
-}
+// MARK: Start
 
 print("""
 

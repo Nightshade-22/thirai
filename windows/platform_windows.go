@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -329,53 +328,14 @@ func openPlayer() {
 	}
 }
 
-// ---------- Claude desktop ----------
-
-func foregroundExe() string {
-	hwnd, _, _ := procGetForegroundWindow.Call()
-	if hwnd == 0 {
-		return ""
+// openNotes opens the notes file in Notepad, or in the app named by "notes_app" in config.json.
+func openNotes() error {
+	path := ensureNotesFile()
+	app := strings.TrimSpace(currentConfig().NotesApp)
+	if app == "" {
+		app = "notepad.exe"
 	}
-	var pid uint32
-	procGetWindowThreadPID.Call(hwnd, uintptr(unsafe.Pointer(&pid)))
-	h, _, _ := procOpenProcess.Call(0x1000, 0, uintptr(pid)) // PROCESS_QUERY_LIMITED_INFORMATION
-	if h == 0 {
-		return ""
-	}
-	defer procCloseHandle.Call(h)
-	buf := make([]uint16, 1024)
-	n := uint32(len(buf))
-	if r, _, _ := procQueryImageName.Call(h, 0, uintptr(unsafe.Pointer(&buf[0])), uintptr(unsafe.Pointer(&n))); r == 0 {
-		return ""
-	}
-	return strings.ToLower(filepath.Base(syscall.UTF16ToString(buf[:n])))
-}
-
-// claudeAsk opens a new chat in the Claude desktop app with the note, using the same
-// claude://claude.ai/new?q= link as the Mac version, then presses Enter if Claude is in front.
-func claudeAsk(text string, autoSend bool) {
-	q := url.Values{"q": {text}, "surface": {"chat"}}.Encode()
-	q = strings.ReplaceAll(q, "+", "%20")
-	shellOpen("claude://claude.ai/new?" + q)
-	if !autoSend {
-		return
-	}
-	time.Sleep(2 * time.Second)
-	if exe := foregroundExe(); !strings.HasPrefix(exe, "claude") {
-		fmt.Printf("Claude was not in front (%s); left the note unsent\n", exe)
-		return
-	}
-	pressKey(vkReturn, false)
-}
-
-func claudeFocus() {
-	for _, a := range listApps() {
-		if strings.EqualFold(a.Name, "Claude") {
-			launchApp(a.Path)
-			return
-		}
-	}
-	shellOpen("claude://claude.ai/new")
+	return exec.Command(app, path).Start()
 }
 
 // ---------- batteries ----------

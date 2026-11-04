@@ -23,12 +23,11 @@ import (
 var webFS embed.FS
 
 var (
-	port       = flag.Int("port", 8045, "HTTP port")
-	noAutoSend = flag.Bool("no-autosend", false, "Take note opens Claude with the text but does not press Enter")
-	usbMode    = flag.Bool("usb", false, "Android over a USB cable (adb): listen on this PC only, never on Wi-Fi")
-	bindAddr   = flag.String("bind", "", "listen on this one IP address only (for example a USB tether adapter)")
-	configDir  string
-	token      string
+	port      = flag.Int("port", 8045, "HTTP port")
+	usbMode   = flag.Bool("usb", false, "Android over a USB cable (adb): listen on this PC only, never on Wi-Fi")
+	bindAddr  = flag.String("bind", "", "listen on this one IP address only (for example a USB tether adapter)")
+	configDir string
+	token     string
 )
 
 // ---------- access token ----------
@@ -244,17 +243,25 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		go launchApp(path)
 		logAction("Open "+appName(path), "opening the app", nil)
 		text(w, 200, "ok")
-	case r.Method == "POST" && r.URL.Path == "/claude":
+	case r.Method == "POST" && (r.URL.Path == "/note" || r.URL.Path == "/claude"): // /claude: pages cached before 0.1
 		t := strings.TrimSpace(p("text"))
 		if len(t) > 4000 {
 			t = t[:4000]
 		}
 		if t == "" {
-			go claudeFocus()
-			logAction("Take note", "opening Claude", nil)
+			err := openNotes()
+			logAction("Take note", "opening notes in Notepad", err)
+			if err != nil {
+				text(w, 500, "could not open the notes")
+				return
+			}
 		} else {
-			go claudeAsk(t, p("send") == "1" && !*noAutoSend)
-			logAction("Take note", fmt.Sprintf("new Claude chat (%d characters)", len([]rune(t))), nil)
+			err := saveNote(t)
+			logAction("Take note", fmt.Sprintf("saved to %s (%d characters)", filepath.Base(notesPath()), len([]rune(t))), err)
+			if err != nil {
+				text(w, 500, "could not save the note")
+				return
+			}
 		}
 		text(w, 200, "ok")
 	default:
