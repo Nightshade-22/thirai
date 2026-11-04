@@ -35,9 +35,9 @@ Windows Defender SmartScreen may warn about an unsigned app the first time. Clic
 | Internet speed | `networkQuality` | Cloudflare's public speed test endpoints (about 15 seconds) |
 | Traffic graph | `en*` interface counters | Busiest connected Ethernet or Wi-Fi adapter |
 | Batteries | IOKit, ioreg, system_profiler | Laptop battery, plus Bluetooth devices that report a level to Windows |
-| Take note | `claude://` link, then Return | Same link, then Enter, only if Claude is the window in front |
+| Take note | Opens a new Claude chat with the note | Adds the note to `Documents\Thirai notes.txt` with the time and the stream or recording timestamp; holding the key opens the file in Notepad |
 
-Options: `--port 8045`, `--usb` (wired mode, below), `--bind <ip>` (listen on one address only) and `--no-autosend` (Take note fills in the chat but leaves it unsent).
+Options: `--port 8045`, `--usb` (wired mode, below), `--bind <ip>` (listen on one address only).
 
 ## Stream page (Windows)
 
@@ -112,6 +112,19 @@ Colours: `indigo`, `teal`, `red`, `purple`, `green`, `orange`, `blue`, `pink`, `
 
 When there are more buttons than fit, the last key becomes More and flips through pages. A phone fits 18 keys per page and a tablet 24. The phone can only press buttons from this list, by number. It never sends its own keystrokes, text or links to the PC.
 
+## Take note (Windows)
+
+Tap Take note on the Deck page, type or dictate a few words, and tap Save note. Thirai adds a line to `Thirai notes.txt` in your Documents folder:
+
+```
+2026-11-04 20:31  [LIVE 1:02:13]  clip the clutch round for YouTube
+2026-11-04 20:44  [LIVE 1:15:40]  fix mic levels before next stream
+```
+
+The bracket shows how far into the stream (or the recording, when you're only recording) you were, so you can find the moment in the VOD. Nothing pops up on the PC while you're live. Hold the key to open the file in Notepad.
+
+To use another editor, add its full path to `config.json`, for example `"notes_app": "C:\\Program Files\\Notepad++\\notepad++.exe"`, and restart Thirai.
+
 ## Sounds page (Windows)
 
 Put `.mp3` or `.wav` files in `%USERPROFILE%\.thirai\sounds` and they appear as buttons, named after the file. A new sound replaces the one playing, and Stop silences it. Sounds play through the PC's default speakers, so OBS picks them up with desktop audio.
@@ -171,7 +184,7 @@ These come from a review of the original OldPhoneDeck code that Thirai grew from
 Points worth knowing, and what the Windows server does about them:
 
 1. Traffic is plain HTTP, so the token travels in the clear on your Wi-Fi. Anyone who can sniff that network can lift it. Fine at home, not on office or café Wi-Fi. Wired mode (above) removes this for Android. With the Stream page, a lifted token can also end your stream or type in your chat, which is one more reason to use wired mode.
-2. Take note sends text to the Claude desktop app and presses Return. Anyone with the token can therefore start Claude chats on your computer. If your Claude app has connectors or local tools enabled, treat the token as access to those too. The Windows server caps notes at 4,000 characters and has `--no-autosend`.
+2. On Windows, Take note only appends text to a notes file and opens it in Notepad (or the `notes_app` you set in config.json), with notes capped at 4,000 characters. Anyone with the token can add lines to that file, nothing more. On a Mac, Take note still sends text to the Claude desktop app and presses Return, so there the token also lets someone start Claude chats on your computer.
 3. On Mac, the Accessibility permission goes to Terminal (or whatever runs the server), so every script you run from Terminal gets it as well. Windows needs no such permission.
 4. The Mac server reads request bodies up to 512 MB before checking the token, so anyone on the network can make it buffer a lot of memory. The Windows server checks the token first and caps bodies at 64 KB.
 5. The optional HTTPS setup installs a home-made root CA on the iPhone. Its private key sits unencrypted in `~/.thirai/tls/ca.key` on the Mac and the CA has no name constraints, so anyone who copies that key can intercept the phone's traffic to any site. Skip that setup unless you need the camera or mic, and delete the profile from the phone if you stop using it.
