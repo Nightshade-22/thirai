@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Go code is formatted
+        working-directory: windows
+        run: |
+          out=$(gofmt -l .)
+          if [ -n "$out" ]; then
+            echo "::error::Run gofmt -w on these files: $out"
+            exit 1
+          fi
+
+      - name: go vet (Windows and demo builds)
+        working-directory: windows
+        run: |
+          GOOS=windows GOARCH=amd64 go vet .
+          go vet .
+
+      - name: Build Windows x64 and arm64
+        working-directory: windows
+        run: |
+          GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o dist/thirai-windows-x64.exe .
+          GOOS=windows GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o dist/thirai-windows-arm64.exe .
+
+      - name: Both servers ship the same phone page
+        run: |
+          cmp windows/web/index.html Sources/thirai/web/index.html || {
+            echo "::error::windows/web/index.html and Sources/thirai/web/index.html differ. Edit one, then copy it over the other."
+            exit 1
+          }
+
+      - name: Phone page is plain ES5 (old iPhones and Android need it)
+        run: |
+          python3 - <<'EOF'
+          import re
+          s = open("windows/web/index.html", encoding="utf-8").read()
+          open("page.js", "w", encoding="utf-8").write("\n;\n".join(re.findall(r"<script[^>]*>(.*?)</script>", s, re.S)))
+          EOF
+          npm install --no-save --silent acorn@8.14.0
+          node -e "
+            const a = require('acorn');
+            try { a.parse(require('fs').readFileSync('page.js', 'utf8'), { ecmaVersion: 5 }); console.log('ES5 OK'); }
+            catch (e) { console.log('::error::The phone page uses JavaScript newer than ES5: ' + e.message); process.exit(1); }"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: thirai-windows
+          path: windows/dist/*.exe
+          retention-days: 14

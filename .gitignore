@@ -1,0 +1,15 @@
+# Build output: release builds go on the GitHub Releases page, not in git
+windows/dist/*.exe
+.build/
+*.exe
+
+# Local settings and secrets that must never be committed
+config.json
+.thirai/
+*.p12
+*.pem
+*.key
+
+# OS clutter
+.DS_Store
+Thumbs.db

@@ -51,6 +51,10 @@ Then open the printed link on the phone. The full Mac setup, including the camer
 
 Every request needs a random access token, and the phone can only press buttons you've configured. On Wi-Fi the link travels as plain HTTP, so treat it like a password and use it on your home network only. Wired mode avoids the network altogether. Never port-forward Thirai to the internet. Details are in the [guide](docs/GUIDE.md#security-notes).
 
+## Contributing
+
+Fork the repo and open a pull request into `main`. Every pull request gets a CI build, a fork check and an AI review, and a maintainer merges. See [CONTRIBUTING.md](CONTRIBUTING.md). Report security problems privately, as described in [SECURITY.md](SECURITY.md).
+
 ## Credits
 
 Thirai is built by Merrilin A J on [OldPhoneDeck](https://github.com/GLAUCOMA82/OldPhoneDeck) by GLAUCOMA82 (MIT licence). The phone page and the Mac server come from that project. The Windows server, Android and tablet support, wired mode, Stream and Sounds pages and the security changes are new in Thirai. Both were built with [Claude Code](https://claude.com/claude-code).
