@@ -13,11 +13,12 @@ jobs:
     name: Build and checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: "1.22"
+          cache: false   # no dependencies to cache (standard library only)
 
       - name: Go code is formatted
         working-directory: windows
@@ -66,7 +67,7 @@ jobs:
           python3 -m venv .venv && .venv/bin/pip install --quiet websockets==13.1
           PYTHON=.venv/bin/python .github/scripts/run_stream_test.sh ./thirai-test
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: thirai-windows
           path: windows/dist/*.exe
@@ -76,7 +77,7 @@ jobs:
     name: Mac build
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build the Mac server
         run: swift build -c release
       - name: Stream page API test (Mac server, against a stand-in OBS and Twitch)
