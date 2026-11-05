@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 /// Now playing + transport controls for Spotify and Apple Music, via AppleScript.
 /// (The private MediaRemote framework would cover every player, but recent macOS
@@ -23,33 +23,50 @@ final class Music {
     func artwork() -> Data? { lock.lock(); defer { lock.unlock() }; return art }
     private func set(_ update: () -> Void) { lock.lock(); update(); lock.unlock() }
 
-    /// Prefers whichever app is actually playing; if neither is, shows the paused one.
-    private static let nowPlayingScript = """
-    set out to ""
-    if application "Spotify" is running then
-      tell application "Spotify"
-        try
-          set t to current track
-          set out to "Spotify" & tab & (player state as text) & tab & (name of t) & tab & (artist of t) & tab & (album of t) & tab & ((duration of t) / 1000) & tab & player position & tab & (artwork url of t) & tab & (id of t)
-        end try
-      end tell
-    end if
-    if application "Music" is running then
-      tell application "Music"
-        try
-          if player state is playing or out is "" then
-            set t to current track
-            set out to "Music" & tab & (player state as text) & tab & (name of t) & tab & (artist of t) & tab & (album of t) & tab & (duration of t) & tab & player position & tab & "" & tab & (persistent ID of t)
-          end if
-        end try
-      end tell
-    end if
-    return out
+    // One script per player, run only while that player is open. A single script naming both would
+    // fail to compile on a Mac without Spotify (its terms such as "artwork url" can't be looked up),
+    // and then Apple Music never showed either.
+    private static let spotifyScript = """
+    tell application "Spotify"
+      try
+        set t to current track
+        return "Spotify" & tab & (player state as text) & tab & (name of t) & tab & (artist of t) & tab & (album of t) & tab & ((duration of t) / 1000) & tab & player position & tab & (artwork url of t) & tab & (id of t)
+      end try
+    end tell
+    return ""
     """
 
+    private static let musicScript = """
+    tell application "Music"
+      try
+        set t to current track
+        return "Music" & tab & (player state as text) & tab & (name of t) & tab & (artist of t) & tab & (album of t) & tab & (duration of t) & tab & player position & tab & "" & tab & (persistent ID of t)
+      end try
+    end tell
+    return ""
+    """
+
+    private static func isRunning(_ bundleID: String) -> Bool {
+        !NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty
+    }
+
+    /// The player the buttons go to when nothing is showing: Spotify if it's open, otherwise Apple Music.
+    private static var fallbackApp: String { isRunning("com.spotify.client") ? "Spotify" : "Music" }
+
+    /// Prefers whichever app is actually playing; if neither is, shows the paused one.
+    private static func nowPlaying() -> String {
+        func run(_ script: String) -> String {
+            (osascript(script) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        let spotify = isRunning("com.spotify.client") ? run(spotifyScript) : ""
+        let music = isRunning("com.apple.Music") ? run(musicScript) : ""
+        if music.hasPrefix("Music\tplaying") || spotify.isEmpty { return music }
+        return spotify
+    }
+
     private func refresh() {
-        guard let raw = Music.osascript(Music.nowPlayingScript)?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !raw.isEmpty else { set { current = [:] }; return }
+        let raw = Music.nowPlaying()
+        guard !raw.isEmpty else { set { current = [:] }; return }
         let f = raw.components(separatedBy: "\t")
         guard f.count >= 9 else { set { current = [:] }; return }
         let num = { (s: String) in Double(s.replacingOccurrences(of: ",", with: ".")) ?? 0 }
@@ -87,7 +104,7 @@ final class Music {
     /// cmd: playpause | next | previous. Goes to the app shown on the deck.
     func control(_ cmd: String) {
         queue.async {
-            let app = (self.current["app"] as? String) ?? "Spotify"
+            let app = (self.current["app"] as? String) ?? Music.fallbackApp
             let verb = ["playpause": "playpause", "next": "next track", "previous": "previous track"][cmd]
             guard let verb else { return }
             _ = Music.osascript("tell application \"\(app)\" to \(verb)")
@@ -97,7 +114,7 @@ final class Music {
     }
 
     func openPlayer() {
-        let app = (snapshot()["app"] as? String) ?? "Spotify"
+        let app = (snapshot()["app"] as? String) ?? Music.fallbackApp
         _ = Music.osascript("tell application \"\(app)\" to activate")
     }
 

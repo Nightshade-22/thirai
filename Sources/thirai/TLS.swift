@@ -7,7 +7,7 @@ import Security
 /// The CA is created once; trust it on the iPhone and every later server cert is accepted.
 /// The server cert is re-issued automatically when the Mac's LAN address changes.
 enum LocalTLS {
-    static let dir = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".thirai/tls")
+    static let dir = userHome.appendingPathComponent(".thirai/tls")
     static var caDER: URL { dir.appendingPathComponent("thirai-ca.cer") }
     private static let p12Password = "thirai"
 

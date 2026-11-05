@@ -60,6 +60,12 @@ jobs:
             try { a.parse(require('fs').readFileSync('page.js', 'utf8'), { ecmaVersion: 5 }); console.log('ES5 OK'); }
             catch (e) { console.log('::error::The phone page uses JavaScript newer than ES5: ' + e.message); process.exit(1); }"
 
+      - name: Stream page API test (Windows server code, against a stand-in OBS and Twitch)
+        run: |
+          (cd windows && go build -o ../thirai-test .)
+          python3 -m venv .venv && .venv/bin/pip install --quiet websockets==13.1
+          PYTHON=.venv/bin/python .github/scripts/run_stream_test.sh ./thirai-test
+
       - uses: actions/upload-artifact@v4
         with:
           name: thirai-windows
@@ -73,3 +79,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build the Mac server
         run: swift build -c release
+      - name: Stream page API test (Mac server, against a stand-in OBS and Twitch)
+        run: |
+          python3 -m venv .venv && .venv/bin/pip install --quiet websockets==13.1
+          PYTHON=.venv/bin/python .github/scripts/run_stream_test.sh .build/release/thirai

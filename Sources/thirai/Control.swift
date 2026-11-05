@@ -1,5 +1,12 @@
 import AppKit
 
+/// The home folder: $HOME when it's set (like other command-line tools, and so tests can use a scratch
+/// folder), otherwise the account's home. ~/.thirai and the notes file live under it.
+let userHome: URL = {
+    if let h = ProcessInfo.processInfo.environment["HOME"], !h.isEmpty { return URL(fileURLWithPath: h, isDirectory: true) }
+    return URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
+}()
+
 /// The app launcher: lists installed apps, renders their icons, and opens them.
 enum Apps {
     private static let lock = NSLock()
@@ -52,7 +59,7 @@ enum Apps {
 /// Which apps the phone launcher shows, in order. Stored on the Mac so Safari and the
 /// home-screen app (which have separate storage on iOS) see the same list.
 enum Launcher {
-    static let file = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".thirai/launcher.json")
+    static let file = userHome.appendingPathComponent(".thirai/launcher.json")
 
     /// nil = never configured (phone shows everything and suggests editing).
     static func selected() -> [String]? {
@@ -74,11 +81,11 @@ enum Launcher {
 /// Take note: appends short notes to "Thirai notes.txt" in Documents (or ~/.thirai/notes.txt if
 /// Documents can't be written) and opens the file in TextEdit when the key is held.
 enum Notes {
-    static let header = "Thirai notes.\n\n"
+    static let header = "Thirai notes. Times in [brackets] are how far into the stream or recording you were.\n\n"
     private static let lock = NSLock()
 
     private static var candidates: [URL] {
-        let home = FileManager.default.homeDirectoryForCurrentUser
+        let home = userHome
         return [home.appendingPathComponent("Documents/Thirai notes.txt"),
                 home.appendingPathComponent(".thirai/notes.txt")]
     }
@@ -94,11 +101,12 @@ enum Notes {
         return nil
     }
 
-    static func save(_ text: String) -> Bool {
+    /// `streamTime` is "[LIVE 1:02:13]" or "[REC 0:04:10]" while OBS is live or recording.
+    static func save(_ text: String, streamTime: String? = nil) -> Bool {
         let oneLine = text.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
         let stamp = DateFormatter()
         stamp.dateFormat = "yyyy-MM-dd HH:mm"
-        let line = stamp.string(from: Date()) + "  " + String(oneLine.prefix(4000)) + "\n"
+        let line = stamp.string(from: Date()) + (streamTime.map { "  " + $0 } ?? "") + "  " + String(oneLine.prefix(4000)) + "\n"
         lock.lock(); defer { lock.unlock() }
         guard let url = file(), let handle = try? FileHandle(forWritingTo: url) else { return false }
         defer { try? handle.close() }

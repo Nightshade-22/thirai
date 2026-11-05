@@ -14,11 +14,11 @@ On a tablet you get more keys and bigger buttons:
 
 ## What it does
 
-The Deck page has 7 app keys on a phone and 14 or 17 on a tablet, plus Take note: type or dictate a quick note and it's saved to a notes file on your computer with the time and, on Windows while you're live, the stream timestamp. Hold the key to open your notes in Notepad (Windows) or TextEdit (Mac). It also shows what's playing with track controls, your internet speed, and laptop and Bluetooth battery levels.
+The Deck page has 7 app keys on a phone and 14 or 17 on a tablet, plus Take note: type or dictate a quick note and it's saved to a notes file on your computer with the time and, while you're live or recording in OBS, the stream timestamp. Hold the key to open your notes in Notepad (Windows) or TextEdit (Mac). It also shows what's playing with track controls, your internet speed, and laptop and Bluetooth battery levels.
 
-The Stream page (Windows) has a button for each OBS scene and buttons to go live, record, pause, save a replay clip, switch the virtual camera, transition in studio mode, and mute the mic or desktop audio. Twitch buttons create clips and stream markers, run ads, send chat messages and switch emote-only, slow, followers-only and sub-only modes, and the top line shows viewers and followers. Discord mute and deafen, media and volume keys and links sit alongside. Going live needs a press and hold. The top line shows live and recording timers, frame rate, CPU and dropped frames, and every button is set in one config file.
+The Stream page has a button for each OBS scene and buttons to go live, record, pause, save a replay clip, switch the virtual camera, transition in studio mode, and mute the mic or desktop audio. Twitch buttons create clips and stream markers, run ads, send chat messages and switch emote-only, slow, followers-only and sub-only modes, and the top line shows viewers and followers. Discord mute and deafen, media and volume keys and links sit alongside. Going live needs a press and hold. The top line shows live and recording timers, frame rate, CPU and dropped frames, and every button is set in one config file.
 
-The Sounds page (Windows) turns any `.mp3` or `.wav` in the sounds folder into a button. Sounds play through your speakers, so OBS picks them up.
+The Sounds page turns any `.mp3` or `.wav` in the sounds folder into a button. Sounds play through your speakers, so OBS picks them up.
 
 By default the Windows server only talks to an Android phone over a USB cable, so nothing on your Wi-Fi can reach the PC. Wi-Fi mode, for iPhones, iPads and cable-free setups, is one switch away.
 
@@ -44,8 +44,8 @@ Then open the printed link on the phone. The full Mac setup, including the camer
 
 ## Docs
 
-- [Guide](docs/GUIDE.md): Windows setup, Stream and Sounds pages, button config, wired mode, Android and tablets, security notes
-- [Mac](docs/MAC.md): Mac server setup, permissions, HTTPS for modern iPhones, troubleshooting
+- [Guide](docs/GUIDE.md): Windows setup, Stream and Sounds pages (Windows and Mac), button config, wired mode, Android and tablets, security notes
+- [Mac](docs/MAC.md): Mac server setup, Stream and Sounds on a Mac, permissions, HTTPS for modern iPhones, troubleshooting
 
 ## Security in one paragraph
 
