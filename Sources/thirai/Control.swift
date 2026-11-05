@@ -1,5 +1,12 @@
 import AppKit
 
+/// The home folder: $HOME when it's set (like other command-line tools, and so tests can use a scratch
+/// folder), otherwise the account's home. ~/.thirai and the notes file live under it.
+let userHome: URL = {
+    if let h = ProcessInfo.processInfo.environment["HOME"], !h.isEmpty { return URL(fileURLWithPath: h, isDirectory: true) }
+    return URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
+}()
+
 /// The app launcher: lists installed apps, renders their icons, and opens them.
 enum Apps {
     private static let lock = NSLock()
@@ -52,7 +59,7 @@ enum Apps {
 /// Which apps the phone launcher shows, in order. Stored on the Mac so Safari and the
 /// home-screen app (which have separate storage on iOS) see the same list.
 enum Launcher {
-    static let file = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".thirai/launcher.json")
+    static let file = userHome.appendingPathComponent(".thirai/launcher.json")
 
     /// nil = never configured (phone shows everything and suggests editing).
     static func selected() -> [String]? {
@@ -78,7 +85,7 @@ enum Notes {
     private static let lock = NSLock()
 
     private static var candidates: [URL] {
-        let home = FileManager.default.homeDirectoryForCurrentUser
+        let home = userHome
         return [home.appendingPathComponent("Documents/Thirai notes.txt"),
                 home.appendingPathComponent(".thirai/notes.txt")]
     }

@@ -235,7 +235,7 @@ final class OBS {
     private struct Local { var found = false, enabled = false, auth = false, port = 0, password = "" }
 
     private func readLocal() -> Local {
-        let url = FileManager.default.homeDirectoryForCurrentUser
+        let url = userHome
             .appendingPathComponent("Library/Application Support/obs-studio/plugin_config/obs-websocket/config.json")
         guard let d = try? Data(contentsOf: url), let j = (try? JSONSerialization.jsonObject(with: d)) as? JSON else { return Local() }
         return Local(found: true, enabled: j.bool("server_enabled"), auth: j.bool("auth_required"),

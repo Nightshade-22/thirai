@@ -28,7 +28,7 @@ struct Options {
 
 setvbuf(stdout, nil, _IOLBF, 0)
 let opts = Options(CommandLine.arguments)
-let configDir = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".thirai")
+let configDir = userHome.appendingPathComponent(".thirai")
 
 // MARK: Access token (anyone on the Wi-Fi could otherwise open apps on your Mac)
 
