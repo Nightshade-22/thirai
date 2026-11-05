@@ -68,6 +68,8 @@ def tap(i):
 
 
 # --- access ---
+if not wait_for("server starts", lambda: call("GET", "/info")[0] == 200, timeout=40):
+    sys.exit(1)
 s, _ = call("GET", "/info", token="wrong-token")
 check("bad token is refused", s == 403, s)
 s, body = call("GET", "/info")
