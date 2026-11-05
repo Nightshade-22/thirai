@@ -35,7 +35,7 @@ struct HTTPRequest {
 final class HTTPConnection {
     private let conn: NWConnection
     private var buffer = Data()
-    private let maxBody = 512 * 1024 * 1024
+    private let maxBody = 1 << 20   // the phone only ever sends short forms
     private var sending = false
     var onClose: (() -> Void)?
 

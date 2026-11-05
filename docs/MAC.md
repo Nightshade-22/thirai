@@ -1,6 +1,6 @@
 # Thirai on a Mac
 
-The Mac server is written in Swift and has no dependencies. It runs the Deck page (app keys, now playing, internet, batteries, Take note) and, for modern iPhones, a Phone tab that streams the camera and mic to the Mac. The Stream and Sounds pages are on the Windows server only for now.
+The Mac server is written in Swift and has no dependencies. It runs the Deck page (app keys, now playing, internet, batteries, Take note), the Stream and Sounds pages, and, for modern iPhones, a Phone tab that streams the camera and mic to the Mac.
 
 ## Requirements
 
@@ -32,6 +32,7 @@ Tips for a dedicated desk display: set **Auto-Lock → Never**, and use **Guided
 | Permission | Why |
 |---|---|
 | **Automation → Spotify / Music** | Reading what's playing and controlling playback |
+| **Accessibility** | Hotkey and text buttons on the Stream page (Discord mute and deafen, for example). Asked the first time you tap one |
 
 They're granted to the app you run `thirai` from (e.g. Terminal).
 
@@ -48,6 +49,17 @@ Safari only allows the microphone, camera and speech recognition on **HTTPS** pa
 **Mic → video calls:** install [BlackHole 2ch](https://existential.audio/blackhole/) and restart Thirai; pick "BlackHole 2ch" as the microphone in your call app.
 *(For plain FaceTime or Zoom calls, macOS's built-in Continuity Camera is simpler.)*
 
+## Stream and Sounds pages
+
+They work as on Windows: OBS scenes and controls, Twitch, Discord, media and volume keys, and a soundboard. The [guide](GUIDE.md#stream-page) covers connecting OBS and Twitch and changing the buttons. On a Mac:
+
+- Settings are in `~/.thirai/config.json`, written with the default buttons the first time Thirai starts. Edit it and restart Thirai.
+- OBS: turn on Tools > WebSocket Server Settings > Enable. Thirai reads the port and password from OBS's own settings on the same Mac.
+- Twitch: add your client ID to `config.json` (see the guide), restart, then tap any Twitch button. The activation page opens on the Mac.
+- Discord mute and deafen press Control+Shift+Option+M and Control+Shift+Option+D. Set those as Discord keybinds, then allow Terminal (or whichever app runs `thirai`) in System Settings > Privacy & Security > Accessibility when macOS asks.
+- Sounds: put `.mp3` or `.wav` files in `~/.thirai/sounds`. They play through the Mac's current output, so add it to OBS with a macOS Audio Capture source.
+- Take note adds `[LIVE 1:02:13]` (or `[REC …]`) to the line while OBS is live or recording.
+
 ## How it works
 
 ```
@@ -62,7 +74,9 @@ iPhone (Safari)                     Mac: thirai (Swift, no dependencies)
 | Feature | Mac side |
 |---|---|
 | App keys | `NSWorkspace` lists `/Applications`, renders icons, opens apps |
-| Take note | Adds the note to `~/Documents/Thirai notes.txt` (or `~/.thirai/notes.txt` if Documents is blocked) with the time; holding the key opens it in TextEdit |
+| Take note | Adds the note to `~/Documents/Thirai notes.txt` (or `~/.thirai/notes.txt` if Documents is blocked) with the time and stream time; holding the key opens it in TextEdit |
+| Stream page | OBS WebSocket v5 with `URLSessionWebSocketTask`, Twitch Helix with `URLSession`, keystrokes with `CGEvent`, volume with `osascript` |
+| Sounds page | `AVAudioPlayer` |
 | Now playing | AppleScript to Spotify / Music, with a timeout so a pending permission prompt can't freeze it |
 | Internet | `/usr/bin/networkQuality -c` + `en*` interface byte counters |
 | Batteries | IOKit power sources, `ioreg -r -k BatteryPercent`, `system_profiler SPBluetoothDataType` |

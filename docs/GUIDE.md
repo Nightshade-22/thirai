@@ -42,9 +42,9 @@ Windows Defender SmartScreen may warn about an unsigned app the first time. Clic
 
 Options: `--port 8045`, `--wifi` (Wi-Fi mode, same as `"wifi": true` in config.json), `--usb` (force USB mode even if config.json turns Wi-Fi on) and `--bind <ip>` (Wi-Fi mode on one network address only).
 
-## Stream page (Windows)
+## Stream page
 
-The Stream and Sounds tabs appear at the top of the deck when it's connected to the Windows server.
+The Stream and Sounds tabs appear at the top of the deck on both the Windows and the Mac server. Everything in this section works the same on a Mac; the few differences are in [MAC.md](MAC.md#stream-and-sounds-pages).
 
 The Stream page has three parts. The top line shows LIVE or OFFLINE with the stream time, a REC timer, frame rate, CPU and dropped frames. Under it is one button per OBS scene, with the current scene in blue. Below that is a grid of action buttons. The defaults are:
 
@@ -56,18 +56,18 @@ The Stream page has three parts. The top line shows LIVE or OFFLINE with the str
 | Mic, Desktop | Mute or unmute OBS's mic and desktop audio; turns red when muted |
 | Discord: Mute, Deafen | Sends `Ctrl+Shift+Alt+M` and `Ctrl+Shift+Alt+D` (set these as Discord keybinds, below) |
 | Play/Pause, Next track | Media keys, so Spotify or whatever is playing |
-| Volume −, Volume +, Mute PC | System volume |
+| Volume −, Volume +, Mute PC (Mute Mac) | System volume |
 | Virtual cam | OBS virtual camera on or off |
 | Transition | Turns on OBS studio mode, then each tap sends preview to program |
-| Thanks | Types a chat message into whatever window has focus |
-| YT Studio, Twitch | Opens YouTube Studio or the Twitch dashboard on the PC |
+| Thanks | Sends a message to your Twitch chat |
+| YT Studio, Dashboard | Opens YouTube Studio or the Twitch dashboard on the computer |
 
 ### Connect OBS (once)
 
 1. In OBS 28 or newer, open Tools, then WebSocket Server Settings.
 2. Tick Enable WebSocket server. Leave authentication on and click OK.
 
-That's all. Thirai reads the port and password from OBS's own settings on the same PC, so there's nothing to copy. If OBS runs on another computer, put its address in `"host"` and the password from Show Connect Info in `"password"` in `config.json`.
+That's all. Thirai reads the port and password from OBS's own settings on the same computer, so there's nothing to copy. If OBS runs on another computer, put its address in `"host"` and the password from Show Connect Info in `"password"` in `config.json`.
 
 The top line of the Stream page says what's wrong when OBS isn't reachable: OBS not running, the WebSocket server switched off, or a wrong password.
 
@@ -80,9 +80,9 @@ Twitch needs you to register a small app of your own. It takes two minutes and i
 3. Fill in: any unique name (for example `Thirai-yourname`), OAuth Redirect URL `http://localhost`, Category `Broadcasting Suite`, Client Type `Public`. Click Create.
 4. Open the app with Manage and copy its Client ID.
 5. Paste it into `config.json` as `"twitch": { "client_id": "..." }` and restart Thirai.
-6. Tap any Twitch button on the phone. Twitch's activation page opens on the PC with a code filled in; click Authorize. The phone also shows the code, in case you'd rather enter it at twitch.tv/activate on another device.
+6. Tap any Twitch button on the phone. Twitch's activation page opens on the computer with a code filled in; click Authorize. The phone also shows the code, in case you'd rather enter it at twitch.tv/activate on another device.
 
-Thirai never sees your Twitch password. It keeps the sign-in in `twitch.json` in the `.thirai` folder (readable only by your Windows account) and renews it on its own. Delete that file to sign out.
+Thirai never sees your Twitch password. It keeps the sign-in in `twitch.json` in the `.thirai` folder (readable only by your user account) and renews it on its own. Delete that file to sign out.
 
 ### Discord mute and deafen (once)
 
@@ -91,6 +91,8 @@ Discord has no open way for other apps to mute you, so these buttons press keybo
 1. In Discord, open User Settings, then Keybinds, then Add a Keybind.
 2. Pick Toggle Mute, click the shortcut box and press `Ctrl+Shift+Alt+M`.
 3. Add another for Toggle Deafen with `Ctrl+Shift+Alt+D`.
+
+On a Mac the same shortcuts are Control+Shift+Option+M and Control+Shift+Option+D.
 
 Discord shows no mute state to other apps either, so these two buttons don't change colour.
 
@@ -101,7 +103,7 @@ Edit the `buttons` list in `config.json` and restart. Each button has a `type`, 
 | type | Needs | Example |
 | --- | --- | --- |
 | `obs` | `action`: `stream`, `record`, `pause`, `replay`, `vcam`, `mic`, `desktop` or `studio` | `{"type": "obs", "action": "replay", "label": "Clip"}` |
-| `hotkey` | `keys`, such as `ctrl+shift+f13` | `{"type": "hotkey", "keys": "ctrl+alt+s", "label": "Screenshot"}` |
+| `hotkey` | `keys`, such as `ctrl+shift+f13` (on a Mac `cmd` and `option` work too) | `{"type": "hotkey", "keys": "ctrl+alt+s", "label": "Screenshot"}` |
 | `media` | `action`: `playpause`, `next` or `previous` | |
 | `volume` | `action`: `up`, `down` or `mute` | |
 | `text` | `text` to type | `{"type": "text", "text": "!socials", "label": "Socials"}` |
@@ -113,9 +115,9 @@ Twitch buttons are purple unless you give them a colour. Clip, marker and ad dim
 
 Colours: `indigo`, `teal`, `red`, `purple`, `green`, `orange`, `blue`, `pink`, `yellow`. Icons: `broadcast`, `rec`, `pause`, `clip`, `camera`, `transition`, `mic`, `mic-off`, `speaker`, `speaker-off`, `headphones`, `keyboard`, `playpause`, `next`, `prev`, `vol-up`, `vol-down`, `vol-mute`, `chat`, `link`, `note`, `stop`, `scissors`, `flag`, `megaphone`, `smile`, `clock`, `heart`, `star`.
 
-When there are more buttons than fit, the last key becomes More and flips through pages. A phone fits 18 keys per page and a tablet 24. The phone can only press buttons from this list, by number. It never sends its own keystrokes, text or links to the PC.
+When there are more buttons than fit, the last key becomes More and flips through pages. A phone fits 18 keys per page and a tablet 24. The phone can only press buttons from this list, by number. It never sends its own keystrokes, text or links to the computer.
 
-## Take note (Windows)
+## Take note
 
 Tap Take note on the Deck page, type or dictate a few words, and tap Save note. Thirai adds a line to `Thirai notes.txt` in your Documents folder:
 
@@ -124,13 +126,13 @@ Tap Take note on the Deck page, type or dictate a few words, and tap Save note. 
 2026-11-04 20:44  [LIVE 1:15:40]  fix mic levels before next stream
 ```
 
-The bracket shows how far into the stream (or the recording, when you're only recording) you were, so you can find the moment in the VOD. Nothing pops up on the PC while you're live. Hold the key to open the file in Notepad.
+The bracket shows how far into the stream (or the recording, when you're only recording) you were, so you can find the moment in the VOD. Nothing pops up on the computer while you're live. Hold the key to open the file in Notepad, or TextEdit on a Mac.
 
 To use another editor, add its full path to `config.json`, for example `"notes_app": "C:\\Program Files\\Notepad++\\notepad++.exe"`, and restart Thirai.
 
-## Sounds page (Windows)
+## Sounds page
 
-Put `.mp3` or `.wav` files in `%USERPROFILE%\.thirai\sounds` and they appear as buttons, named after the file. A new sound replaces the one playing, and Stop silences it. Sounds play through the PC's default speakers, so OBS picks them up with desktop audio.
+Put `.mp3` or `.wav` files in `%USERPROFILE%\.thirai\sounds` (on a Mac, `~/.thirai/sounds`) and they appear as buttons, named after the file. A new sound replaces the one playing, and Stop silences it. Sounds play through the computer's default output, so OBS picks them up with desktop audio.
 
 ### Build it yourself
 
@@ -200,3 +202,5 @@ To issue a new token on either system, delete `.thirai/token` in your home folde
 ## Testing status
 
 The Windows server compiles and its HTTP side was tested against the phone page in emulated Android and iPhone browsers. The Windows-only parts (Start menu apps, icons, media controls, Bluetooth batteries, opening Notepad) follow documented APIs but haven't run on a real Windows PC yet. If one fails, the deck shows that widget empty and the rest keeps working. USB mode was tested with a stand-in for adb, and OBS control against a stand-in OBS WebSocket server with real password login, not with OBS itself.
+
+Every CI run starts both servers (the Windows code on Linux, the Mac server on macOS) against a stand-in OBS and Twitch and taps through scenes, the OBS and Twitch buttons, Take note and the Sounds page (`.github/scripts/run_stream_test.sh`). Hotkey, volume, media and link buttons aren't part of that test.

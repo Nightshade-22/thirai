@@ -37,7 +37,7 @@ func loadToken() -> String {
     if let t = try? String(contentsOf: file, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines), !t.isEmpty {
         return t
     }
-    let t = (0..<12).map { _ in String("abcdefghjkmnpqrstuvwxyz23456789".randomElement()!) }.joined()
+    let t = (0..<16).map { _ in String("abcdefghjkmnpqrstuvwxyz23456789".randomElement()!) }.joined()
     try? FileManager.default.createDirectory(at: configDir, withIntermediateDirectories: true)
     try? t.write(to: file, atomically: true, encoding: .utf8)
     try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
@@ -82,6 +82,15 @@ let stats = Stats()
 stats.start()
 let music = Music()
 music.start()
+let deck = StreamDeck(configDir: configDir, music: music)   // Stream and Sounds pages
+deck.start()
+
+/// Compares the whole token every time, so response timing doesn't reveal how much of a guess was right.
+func tokenOK(_ k: String?) -> Bool {
+    let a = Array((k ?? "").utf8), b = Array(token.utf8)
+    guard a.count == b.count else { return false }
+    return zip(a, b).reduce(UInt8(0)) { $0 | ($1.0 ^ $1.1) } == 0
+}
 
 // MARK: Routes
 
@@ -117,15 +126,26 @@ let routes: (HTTPRequest, HTTPConnection) -> Void = { req, conn in
         let data = (try? Data(contentsOf: webRoot.appendingPathComponent(String(req.path.dropFirst())))) ?? Data()
         return conn.respond(200, type, data)
     }
-    guard req.query["k"] == token else { return conn.respond(403, text: "bad token") }
+    guard tokenOK(req.query["k"]) else { return conn.respond(403, text: "bad token") }
     let p = req.params
 
     switch (req.method, req.path) {
     case ("GET", "/info"):
-        conn.respondJSON(["camera": phoneMedia.isLive])
+        let info: JSON = ["camera": phoneMedia.isLive, "os": "mac", "stream": true,
+                          "name": Host.current().localizedName ?? "Mac"]
+        conn.respondJSON(info)
+    case ("GET", "/stream"):
+        conn.respondJSON(deck.state())
+    case ("POST", "/action"):
+        // OBS and Twitch calls can take a few seconds: keep them off the HTTP queue.
+        DispatchQueue.global().async {
+            let (status, msg) = deck.handle(p)
+            server.queue.async { conn.respond(status, text: msg) }
+        }
     case ("GET", "/stats"):
         var snap = stats.snapshot()
         snap["music"] = music.snapshot()
+        snap["status"] = deck.status()
         conn.respondJSON(snap)
     case ("POST", "/speedtest"):
         stats.runSpeedTest()
@@ -162,7 +182,7 @@ let routes: (HTTPRequest, HTTPConnection) -> Void = { req, conn in
         if text.isEmpty {
             DispatchQueue.main.async { _ = Notes.open() }
             conn.respond(text: "ok")
-        } else if Notes.save(text) {
+        } else if Notes.save(text, streamTime: deck.streamTime()) {
             print("Take note: saved (\(text.count) characters)")
             conn.respond(text: "ok")
         } else {
@@ -203,7 +223,8 @@ Thirai is running. On the phone (same Wi-Fi), open Safari and go to:
     http://\(lanIP):\(opts.port)/#k=\(token)
 
 iPhone: tap Share → Add to Home Screen. Android: Chrome menu → Add to Home screen.
-Hold any key to choose your apps.
+Hold any key to choose your apps. Stream and Sounds pages: OBS, Twitch and buttons are set in
+\(configDir.path)/config.json, sounds go in \(configDir.path)/sounds.
 
 Modern iPhone (voice, camera, mic): once, open http://\(lanIP):\(opts.port)/thirai.mobileconfig,
 install it, enable it in Settings → General → About → Certificate Trust Settings,

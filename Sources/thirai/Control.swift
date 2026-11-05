@@ -74,7 +74,7 @@ enum Launcher {
 /// Take note: appends short notes to "Thirai notes.txt" in Documents (or ~/.thirai/notes.txt if
 /// Documents can't be written) and opens the file in TextEdit when the key is held.
 enum Notes {
-    static let header = "Thirai notes.\n\n"
+    static let header = "Thirai notes. Times in [brackets] are how far into the stream or recording you were.\n\n"
     private static let lock = NSLock()
 
     private static var candidates: [URL] {
@@ -94,11 +94,12 @@ enum Notes {
         return nil
     }
 
-    static func save(_ text: String) -> Bool {
+    /// `streamTime` is "[LIVE 1:02:13]" or "[REC 0:04:10]" while OBS is live or recording.
+    static func save(_ text: String, streamTime: String? = nil) -> Bool {
         let oneLine = text.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
         let stamp = DateFormatter()
         stamp.dateFormat = "yyyy-MM-dd HH:mm"
-        let line = stamp.string(from: Date()) + "  " + String(oneLine.prefix(4000)) + "\n"
+        let line = stamp.string(from: Date()) + (streamTime.map { "  " + $0 } ?? "") + "  " + String(oneLine.prefix(4000)) + "\n"
         lock.lock(); defer { lock.unlock() }
         guard let url = file(), let handle = try? FileHandle(forWritingTo: url) else { return false }
         defer { try? handle.close() }
