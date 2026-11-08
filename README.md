@@ -4,6 +4,8 @@ Thirai (திரை, Tamil for "screen") turns an old phone or tablet into a to
 
 Nothing is installed on the phone. The panel is a web page, so it runs in Safari or Chrome on anything from an iPhone 4S or iPad 2 to the latest Android tablet.
 
+Your computer does the heavy lifting: it runs Thirai, opens apps and talks to OBS, Twitch and Discord. The phone only shows the page and sends your taps, so its model and speed don't matter. Phones people have tried are in [Tested phones](#tested-phones).
+
 | Deck | Stream |
 | --- | --- |
 | ![Deck on a phone](docs/deck-phone.png) | ![Stream page on a phone](docs/stream-phone.png) |
@@ -41,6 +43,23 @@ swift build -c release
 ```
 
 Then open the printed link on the phone. The full Mac setup, including the camera and mic tab for modern iPhones, is in [docs/MAC.md](docs/MAC.md).
+
+## Make it yours
+
+Everything in Thirai can be changed. Fork the repo and build your own version:
+
+- Buttons on the Stream page, their labels, colours, order and actions, live in `config.json` (see the [guide](docs/GUIDE.md)). No code needed.
+- The phone page is one file, [Sources/thirai/web/index.html](Sources/thirai/web/index.html), shared by both servers. Change the layout, add a page, restyle it.
+- The servers are small: Go in [windows/](windows) for Windows, Swift in [Sources/thirai](Sources/thirai) for the Mac.
+
+If you build something others could use, open a pull request.
+
+## Tested phones
+
+The phone side is a plain web page, so any phone or tablet with a browser should work. This list is what people have actually run it on. If you try Thirai on a phone or tablet, add a row in a pull request, even if something didn't work (say what in Notes).
+
+| Phone or tablet | OS and browser | Connection | Computer | Notes |
+| --- | --- | --- | --- | --- |
 
 ## Docs
 

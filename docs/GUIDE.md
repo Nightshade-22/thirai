@@ -1,12 +1,12 @@
 # Thirai guide: Windows, Android, tablets and streaming
 
-Thirai's phone side is a web page, so it runs on any iPhone, iPad, Android phone or Android tablet, against either the Windows server or the Mac server. Mac setup is in [MAC.md](MAC.md).
+Thirai's phone side is a web page, so it runs on any iPhone, iPad, Android phone or Android tablet, against either the Windows server or the Mac server. The computer does the work, so the phone's model doesn't matter. Phones people have tried are listed in the [README](../README.md#tested-phones). Mac setup is in [MAC.md](MAC.md).
 
 | Device | Mac server (original, Swift) | Windows server (new, Go) |
 | --- | --- | --- |
 | iPhone 4S and newer, iPad 2 and newer (Safari) | Yes | Yes |
 | Android 5 and newer, phone or tablet (Chrome) | Yes | Yes |
-| Stream page (OBS, Discord, music, links) and Sounds page | No | Yes |
+| Stream page (OBS, Twitch, Discord, music, links) and Sounds page | Yes | Yes |
 | Camera and mic tab | Modern iPhones only, needs the HTTPS setup | Not available |
 
 Tablets get their own layout: three rows of five or six app keys (14 or 17 apps plus Take note) and bigger Stream and Sounds grids. A tablet is anything whose shorter screen side is at least 600 points, which covers every iPad and most 7-inch and larger Android tablets.
